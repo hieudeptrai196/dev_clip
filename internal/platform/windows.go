@@ -4,6 +4,7 @@ package platform
 
 import (
 	"errors"
+	"fmt"
 	"syscall"
 	"time"
 	"unsafe"
@@ -81,10 +82,11 @@ func (p *windowsPlatform) messageLoop(ready chan<- error) {
 		return
 	}
 
-	// Register Alt+V as the paste hotkey.
-	// Ctrl+Shift+V: avoids the Alt menu mnemonics (e.g. VS Code 'View' menu).
-	if r, _, err := procRegisterHotKey.Call(hwnd, uintptr(HotkeyPasteID), modControl|modShift, vkV); r == 0 {
-		ready <- err
+	// Register Alt+V as the paste hotkey. RegisterHotKey gives OS-level priority:
+	// once registered, no normal app can intercept it. It only fails (r==0) if
+	// another app already reserved Alt+V globally — surfaced as a start error.
+	if r, _, err := procRegisterHotKey.Call(hwnd, uintptr(HotkeyPasteID), modAlt, vkV); r == 0 {
+		ready <- fmt.Errorf("RegisterHotKey(Alt+V) failed (another app may hold it): %w", err)
 		return
 	}
 
@@ -264,13 +266,11 @@ func focusTargetWindow(target windows.Handle) {
 }
 
 func (p *windowsPlatform) CursorPos() (int, int) {
-	x, y := getCursorPos() // physical pixels
-	scale := dpiScaleAtCursor(int32(x), int32(y))
-	if scale <= 0 {
-		scale = 1.0
-	}
-	// Convert to logical (DIP) coordinates for Wails WindowSetPosition.
-	return int(float64(x) / scale), int(float64(y) / scale)
+	x, y := getCursorPos() // physical pixels (absolute screen coords)
+	// Wails adds the window monitor's work-area origin, so subtract the cursor
+	// monitor's work-area origin to land the popup at the absolute cursor.
+	wl, wt := cursorMonitorWorkOrigin(int32(x), int32(y))
+	return x - int(wl), y - int(wt)
 }
 
 func (p *windowsPlatform) RegisterHotkey(spec HotkeySpec) error {
