@@ -13,12 +13,16 @@
   color: rgba(255, 255, 255, 0.90);
   user-select: none;
   position: relative;
+  -webkit-app-region: drag;
+  --wails-draggable: drag;
+  --wails-drag: drag;
+  cursor: grab;
 }
 
 /* ── Close button (top-right corner) ── */
 .close-btn {
   position: absolute;
-  top: 6px;
+  top: 4px;
   right: 6px;
   width: 28px;
   height: 28px;
@@ -36,6 +40,9 @@
   z-index: 10;
   transition: background 0.12s, color 0.12s;
   outline: none;
+  -webkit-app-region: no-drag;
+  --wails-draggable: no-drag;
+  --wails-drag: no-drag;
 }
 
 .close-btn:hover {
@@ -47,6 +54,45 @@
   outline: 1px solid rgba(0, 120, 212, 0.70);
   outline-offset: 1px;
 }
+
+/* ── Settings Gear Toggle Button ── */
+.settings-toggle-btn {
+  position: absolute;
+  top: 4px;
+  right: 36px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  z-index: 10;
+  transition: background 0.12s, color 0.12s;
+  outline: none;
+  -webkit-app-region: no-drag;
+  --wails-draggable: no-drag;
+  --wails-drag: no-drag;
+}
+
+
+.settings-toggle-btn:hover,
+.settings-toggle-btn.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.90);
+}
+
+.settings-toggle-btn:focus-visible {
+  outline: 1px solid rgba(0, 120, 212, 0.70);
+  outline-offset: 1px;
+}
+
 
 /* ── Search bar ── */
 .search-wrap {
@@ -66,6 +112,7 @@
   padding: 7px 38px 7px 10px;
   outline: none;
   transition: border-color 0.15s, background 0.15s;
+  cursor: text;
 }
 
 .search-input::placeholder {
@@ -287,6 +334,10 @@
   gap: 4px;
   padding: 0 2px 8px;
   flex-shrink: 0;
+  margin-right: 70px; /* Leave space for settings and close buttons */
+  -webkit-app-region: drag;
+  --wails-draggable: drag;
+  --wails-drag: drag; /* DRAG HANDLE FOR WINDOW */
 }
 
 .tab {
@@ -302,6 +353,9 @@
   padding: 5px 0;
   transition: background 0.12s, border-color 0.12s, color 0.12s;
   outline: none;
+  -webkit-app-region: no-drag;
+  --wails-draggable: no-drag;
+  --wails-drag: no-drag; /* ENSURE BUTTON CLICKS WORK */
 }
 
 .tab:hover {
@@ -362,6 +416,7 @@
   padding: 6px 10px;
   outline: none;
   transition: border-color 0.15s, background 0.15s;
+  cursor: text;
 }
 
 .ph-input::placeholder {
@@ -414,3 +469,265 @@
   background: rgba(255, 255, 255, 0.10);
   color: rgba(255, 255, 255, 0.85);
 }
+
+/* ── Settings Panel ── */
+.settings-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.settings-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Scrollbar for settings */
+.settings-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.settings-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.settings-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 3px;
+}
+
+/* Sections */
+.settings-section {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.50);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 4px;
+}
+
+/* Row elements */
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-row--add {
+  margin-top: 4px;
+}
+
+.settings-plus {
+  color: rgba(255, 255, 255, 0.40);
+  font-weight: 600;
+}
+
+/* Inputs & Selects */
+.settings-select {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.90);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 5px 8px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.settings-select option {
+  background: #202020;
+  color: #fff;
+}
+
+.settings-select:focus {
+  border-color: rgba(0, 120, 212, 0.70);
+}
+
+.settings-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.90);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 5px 10px;
+  outline: none;
+  transition: border-color 0.15s;
+  cursor: text;
+}
+
+.settings-input:focus {
+  border-color: rgba(0, 120, 212, 0.70);
+}
+
+.settings-btn {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.80);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 12px;
+  transition: background 0.10s, border-color 0.10s, color 0.10s;
+  outline: none;
+}
+
+.settings-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.settings-btn--primary {
+  background: rgba(0, 120, 212, 0.28);
+  border-color: #0078d4;
+  color: #fff;
+}
+
+.settings-btn--primary:hover {
+  background: rgba(0, 120, 212, 0.42);
+}
+
+/* Alerts */
+.settings-alert {
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-bottom: 8px;
+  border: 1px solid;
+}
+
+.settings-alert--error {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.30);
+  color: #fca5a5;
+}
+
+.settings-alert--success {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: rgba(34, 197, 94, 0.30);
+  color: #86efac;
+}
+
+/* Capacity Control */
+.capacity-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.settings-input--number {
+  max-width: 80px;
+  text-align: center;
+}
+
+.settings-help {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.40);
+}
+
+/* Toggle Checkbox Styling */
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.toggle-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #0078d4;
+  cursor: pointer;
+}
+
+.toggle-text {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* About */
+.settings-section--about {
+  align-items: center;
+  text-align: center;
+  background: transparent;
+  border: none;
+  padding-top: 15px;
+}
+
+.about-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.80);
+}
+
+.about-desc {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.40);
+}
+
+/* ── Drag and No-Drag Regions ── */
+.panel,
+.tabs,
+.search-wrap,
+.clip-list,
+.settings-panel,
+.settings-scroll,
+.hint-bar,
+.empty-state {
+  -webkit-app-region: drag;
+  --wails-draggable: drag;
+  --wails-drag: drag;
+  cursor: grab;
+}
+
+.panel:active,
+.tabs:active,
+.search-wrap:active,
+.clip-list:active,
+.settings-panel:active,
+.settings-scroll:active,
+.hint-bar:active,
+.empty-state:active {
+  cursor: grabbing;
+}
+
+.tab,
+.close-btn,
+.settings-toggle-btn,
+.search-input,
+.clip-item,
+.ph-input,
+.ph-btn,
+.settings-select,
+.settings-input,
+.settings-btn,
+.toggle-label,
+.toggle-checkbox {
+  -webkit-app-region: no-drag;
+  --wails-draggable: no-drag;
+  --wails-drag: no-drag;
+}
+
+

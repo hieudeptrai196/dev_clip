@@ -11,6 +11,7 @@ import (
 var (
 	user32   = windows.NewLazyDLL("user32.dll")
 	kernel32 = windows.NewLazyDLL("kernel32.dll")
+	shell32  = windows.NewLazyDLL("shell32.dll")
 
 	procMonitorFromPoint = user32.NewProc("MonitorFromPoint")
 	procGetMonitorInfoW  = user32.NewProc("GetMonitorInfoW")
@@ -23,6 +24,7 @@ var (
 	procTranslateMessage           = user32.NewProc("TranslateMessage")
 	procDispatchMessageW           = user32.NewProc("DispatchMessageW")
 	procRegisterHotKey             = user32.NewProc("RegisterHotKey")
+	procUnregisterHotKey           = user32.NewProc("UnregisterHotKey")
 	procOpenClipboard              = user32.NewProc("OpenClipboard")
 	procCloseClipboard             = user32.NewProc("CloseClipboard")
 	procGetClipboardData           = user32.NewProc("GetClipboardData")
@@ -37,11 +39,20 @@ var (
 	procAttachThreadInput          = user32.NewProc("AttachThreadInput")
 	procSetFocus                   = user32.NewProc("SetFocus")
 	procBringWindowToTop           = user32.NewProc("BringWindowToTop")
+	procPostMessageW               = user32.NewProc("PostMessageW")
+	procCreatePopupMenu            = user32.NewProc("CreatePopupMenu")
+	procAppendMenuW                = user32.NewProc("AppendMenuW")
+	procTrackPopupMenuEx           = user32.NewProc("TrackPopupMenuEx")
+	procDestroyMenu                = user32.NewProc("DestroyMenu")
+	procLoadImageW                 = user32.NewProc("LoadImageW")
 	procGetCurrentThreadId         = kernel32.NewProc("GetCurrentThreadId")
+	procGetModuleHandleW           = kernel32.NewProc("GetModuleHandleW")
 	procQueryFullProcessImageNameW = kernel32.NewProc("QueryFullProcessImageNameW")
 	procGlobalAlloc                = kernel32.NewProc("GlobalAlloc")
 	procGlobalLock                 = kernel32.NewProc("GlobalLock")
 	procGlobalUnlock               = kernel32.NewProc("GlobalUnlock")
+
+	procShellNotifyIconW = shell32.NewProc("Shell_NotifyIconW")
 )
 
 // Win32 constants used by the platform layer.
@@ -51,6 +62,15 @@ const (
 
 	wmClipboardUpdate = 0x031D
 	wmHotkey          = 0x0312
+	wmCommand         = 0x0111
+	wmDestroy         = 0x0002
+	wmApp             = 0x8000
+	wmLButtonDblClk   = 0x0203
+	wmRButtonUp       = 0x0205
+
+	// Custom messages posted to the hidden window.
+	wmTrayIcon      = wmApp + 100 // Shell_NotifyIcon callback message
+	wmUpdateHotkey  = wmApp + 101 // request hotkey re-registration
 
 	modAlt     = 0x0001
 	modControl = 0x0002
@@ -65,6 +85,35 @@ const (
 	vkOEM3        = 0xC0 // the `~ key (backtick / grave), left of the 1 key
 
 	processQueryLimitedInformation = 0x1000
+
+	// Shell_NotifyIcon operations
+	nimAdd    = 0x00000000
+	nimModify = 0x00000001
+	nimDelete = 0x00000002
+
+	// NOTIFYICONDATA flags
+	nifMessage = 0x00000001
+	nifIcon    = 0x00000002
+	nifTip     = 0x00000004
+
+	// Tray context menu item IDs
+	idmShow     = 1001
+	idmSettings = 1002
+	idmQuit     = 1003
+
+	// AppendMenu flags
+	mfString    = 0x00000000
+	mfSeparator = 0x00000800
+
+	// TrackPopupMenu flags
+	tpmRightAlign = 0x0008
+	tpmBottomAlign = 0x0020
+	tpmLeftButton  = 0x0000
+
+	// LoadImage constants
+	imageIcon      = 1
+	lrLoadFromFile = 0x0010
+	lrDefaultSize  = 0x0040
 )
 
 type point struct{ X, Y int32 }
@@ -140,4 +189,31 @@ func cursorMonitorWorkOrigin(physX, physY int32) (int32, int32) {
 		return 0, 0
 	}
 	return mi.rcWork.Left, mi.rcWork.Top
+}
+
+// notifyIconData mirrors the NOTIFYICONDATAW struct (V2 — szTip is 128 chars).
+type notifyIconData struct {
+	CbSize           uint32
+	HWnd             uintptr
+	UID              uint32
+	UFlags           uint32
+	UCallbackMessage uint32
+	HIcon            uintptr
+	SzTip            [128]uint16
+}
+
+// shellNotifyIcon wraps Shell_NotifyIconW.
+func shellNotifyIcon(op uint32, nid *notifyIconData) error {
+	nid.CbSize = uint32(unsafe.Sizeof(*nid))
+	r, _, err := procShellNotifyIconW.Call(uintptr(op), uintptr(unsafe.Pointer(nid)))
+	if r == 0 {
+		return err
+	}
+	return nil
+}
+
+// setTipText copies a Go string into the fixed-size szTip field of notifyIconData.
+func setTipText(nid *notifyIconData, tip string) {
+	u16, _ := windows.UTF16FromString(tip)
+	copy(nid.SzTip[:], u16)
 }
