@@ -79,6 +79,7 @@ function App() {
   // ── Recent tab state ──
   const [items, setItems] = useState<ClipItem[]>([]);
   const [query, setQuery] = useState("");
+  const [filterFormat, setFilterFormat] = useState<string>("all");
   const [sel, setSel] = useState(0);
   const [thumbs, setThumbs] = useState<Record<number, string>>({});
   const searchRef = useRef<HTMLInputElement>(null);
@@ -274,6 +275,7 @@ function App() {
       ignoreBlurUntil.current = Date.now() + 600;
       refresh();
       setQuery("");
+      setFilterFormat("all");
       setSel(0);
       setPhSnippet(null);
       setPhValues({});
@@ -290,6 +292,7 @@ function App() {
       setPhSnippet(null);
       setPhValues({});
       setPhNames([]);
+      setFilterFormat("all");
       loadSettings();
     });
     return () => {
@@ -354,9 +357,13 @@ function App() {
   }, [phSnippet, phNames]);
 
   // ── Recent tab logic ──
-  const filtered = items.filter((it) =>
-    it.preview.toLowerCase().includes(query.toLowerCase())
-  );
+  const filtered = items.filter((it) => {
+    const matchesQuery = it.preview.toLowerCase().includes(query.toLowerCase());
+    if (filterFormat === "all") return matchesQuery;
+    if (filterFormat === "text") return matchesQuery && it.kind === 0 && it.format === "plain";
+    if (filterFormat === "image") return matchesQuery && it.kind === 1;
+    return matchesQuery && it.kind === 0 && it.format === filterFormat;
+  });
   const clampedSel = Math.min(sel, Math.max(0, filtered.length - 1));
 
   useEffect(() => {
@@ -624,6 +631,22 @@ function App() {
                 setSel(0);
               }}
             />
+            <select
+              className="search-filter-select"
+              value={filterFormat}
+              onChange={(e) => {
+                setFilterFormat(e.target.value);
+                setSel(0);
+              }}
+            >
+              <option value="all">All Types</option>
+              <option value="text">Plain Text</option>
+              <option value="image">Image</option>
+              <option value="json">JSON</option>
+              <option value="sql">SQL</option>
+              <option value="jwt">JWT</option>
+              <option value="timestamp">Epoch</option>
+            </select>
             {items.length > 0 && (
               <button
                 className="clear-all-btn"
