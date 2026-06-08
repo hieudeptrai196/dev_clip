@@ -10,6 +10,10 @@ export function CursorPos() {
   return window['go']['main']['App']['CursorPos']();
 }
 
+export function FormatItem(arg1) {
+  return window['go']['main']['App']['FormatItem'](arg1);
+}
+
 export function Hide() {
   return window['go']['main']['App']['Hide']();
 }
@@ -18,8 +22,16 @@ export function History() {
   return window['go']['main']['App']['History']();
 }
 
+export function PasteFormatted(arg1) {
+  return window['go']['main']['App']['PasteFormatted'](arg1);
+}
+
 export function PasteItem(arg1) {
   return window['go']['main']['App']['PasteItem'](arg1);
+}
+
+export function PasteTransformed(arg1, arg2) {
+  return window['go']['main']['App']['PasteTransformed'](arg1, arg2);
 }
 
 export function Thumbnail(arg1) {

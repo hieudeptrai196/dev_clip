@@ -22,6 +22,7 @@ type ClipItem struct {
 	Hash      uint64    `json:"-"`
 	CreatedAt time.Time `json:"createdAt"`
 	Pinned    bool      `json:"pinned"`
+	Format    string    `json:"format"` // "plain", "json", "sql"
 }
 
 func HashText(s string) uint64 {
