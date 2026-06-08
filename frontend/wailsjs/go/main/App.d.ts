@@ -11,3 +11,5 @@ export function Hide():Promise<void>;
 export function History():Promise<Array<clip.ClipItem>>;
 
 export function PasteItem(arg1:number):Promise<void>;
+
+export function Thumbnail(arg1:number):Promise<string>;
