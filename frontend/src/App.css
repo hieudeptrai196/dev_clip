@@ -107,23 +107,26 @@
 
 /* ── Individual list item ── */
 .clip-item {
-  border-radius: 6px;
-  padding: 8px 10px;
-  margin-bottom: 2px;
+  border-radius: 8px;
+  padding: 9px 11px;
+  margin-bottom: 6px;
   font-size: 13px;
   line-height: 1.4;
   cursor: pointer;
-  transition: background 0.10s;
-  border-left: 2px solid transparent;
+  transition: background 0.10s, border-color 0.10s;
+  /* Frame around each item so they read as separate cards */
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .clip-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .clip-item.selected {
   background: rgba(0, 120, 212, 0.28);
-  border-left-color: #0078d4;
+  border-color: #0078d4;
 }
 
 /* Two-line clamp for text items */
@@ -150,6 +153,20 @@
 .image-icon {
   font-size: 14px;
   color: rgba(0, 120, 212, 0.85);
+}
+
+/* Small image preview thumbnail */
+.thumb {
+  max-width: 56px;
+  max-height: 40px;
+  border-radius: 3px;
+  object-fit: cover;
+  display: block;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.image-text {
+  color: rgba(255, 255, 255, 0.55);
 }
 
 /* ── Empty state ── */
