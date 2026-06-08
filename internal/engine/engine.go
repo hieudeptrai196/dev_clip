@@ -30,16 +30,32 @@ type Engine struct {
 	onShowSettings   func()
 	onQuitRequested  func()
 	lastSelfWrite    uint64 // hash we wrote ourselves, to ignore on next change
+
+	// Stats fields
+	totalCopies   int
+	typeCounts    map[string]int
+	textFrequency map[uint64]int
+	textPreviews  map[uint64]string
+	hourlyCopies  [24]int
+	dashboardPort int
 }
 
 func New(cfg Config) *Engine {
 	if cfg.RestoreDelay == 0 {
 		cfg.RestoreDelay = 200 * time.Millisecond
 	}
-	return &Engine{cfg: cfg}
+	return &Engine{
+		cfg:           cfg,
+		typeCounts:    make(map[string]int),
+		textFrequency: make(map[uint64]int),
+		textPreviews:  make(map[uint64]string),
+	}
 }
 
 func (e *Engine) Start() error {
+	if err := e.StartDashboard(); err != nil {
+		println("Warning: Dashboard server failed to start:", err.Error())
+	}
 	return e.cfg.Platform.Start(platform.EventsFunc{
 		ClipboardChange: e.handleClipboardChange,
 		Hotkey:          e.handleHotkey,
@@ -102,6 +118,10 @@ func (e *Engine) handleClipboardChange() {
 			fmtLabel = "json"
 		case format.SQL:
 			fmtLabel = "sql"
+		case format.JWT:
+			fmtLabel = "jwt"
+		case format.Timestamp:
+			fmtLabel = "timestamp"
 		}
 		item = &clip.ClipItem{
 			Kind:    clip.KindText,
@@ -134,6 +154,20 @@ func (e *Engine) handleClipboardChange() {
 	e.mu.Unlock()
 
 	e.cfg.Store.Push(item)
+
+	// Update stats
+	e.mu.Lock()
+	e.totalCopies++
+	if item.Kind == clip.KindImage {
+		e.typeCounts["image"]++
+	} else {
+		e.typeCounts[item.Format]++
+		e.textFrequency[item.Hash]++
+		e.textPreviews[item.Hash] = item.Preview
+	}
+	e.hourlyCopies[time.Now().Hour()]++
+	e.mu.Unlock()
+
 	if e.onChange != nil {
 		e.onChange()
 	}
@@ -250,6 +284,51 @@ func (e *Engine) FormatItem(id uint64) string {
 	}
 }
 
+// MinifyItem returns a minified string for the given text item.
+func (e *Engine) MinifyItem(id uint64) string {
+	it := e.cfg.Store.Get(id)
+	if it == nil || it.Kind != clip.KindText {
+		return ""
+	}
+	switch it.Format {
+	case "json":
+		s, err := format.MinifyJSON(it.Text)
+		if err != nil {
+			return it.Text
+		}
+		return s
+	case "sql":
+		return format.MinifySQL(it.Text)
+	default:
+		return it.Text
+	}
+}
+
+// PasteMinified minifies the JSON/SQL item and pastes it.
+func (e *Engine) PasteMinified(id uint64) error {
+	it := e.cfg.Store.Get(id)
+	if it == nil {
+		return fmt.Errorf("item %d not found", id)
+	}
+	if it.Kind != clip.KindText {
+		return fmt.Errorf("item %d is not a text item", id)
+	}
+	var minified string
+	var err error
+	switch it.Format {
+	case "json":
+		minified, err = format.MinifyJSON(it.Text)
+		if err != nil {
+			return err
+		}
+	case "sql":
+		minified = format.MinifySQL(it.Text)
+	default:
+		minified = it.Text
+	}
+	return e.pasteText(minified)
+}
+
 // PasteTransformed transforms the item's text using format.Transform then
 // pastes it via pasteText. Returns an error if the item is not found or is an
 // image.
@@ -265,7 +344,7 @@ func (e *Engine) PasteTransformed(id uint64, op string) error {
 }
 
 // PasteFormatted pastes the pretty-printed version of the given text item.
-// Returns an error if the item is not found or is an image.
+// Returns an error if the item is not found or is an.
 func (e *Engine) PasteFormatted(id uint64) error {
 	s := e.FormatItem(id)
 	if s == "" {

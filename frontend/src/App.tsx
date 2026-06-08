@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { History, PasteItem, Hide, Thumbnail, FormatItem, PasteTransformed, PasteFormatted, Snippets, SnippetPlaceholders, PasteSnippet, GetSettings, SaveSettings, TogglePin, ReorderPins, DeleteItem, ClearAll } from "../wailsjs/go/main/App";
+import { History, PasteItem, Hide, Thumbnail, FormatItem, PasteTransformed, PasteFormatted, Snippets, SnippetPlaceholders, PasteSnippet, GetSettings, SaveSettings, TogglePin, ReorderPins, DeleteItem, ClearAll, PasteMinified, DecodeJWT, OpenDashboard, PasteText } from "../wailsjs/go/main/App";
 import { EventsOn, WindowFullscreen, WindowUnfullscreen, BrowserOpenURL } from "../wailsjs/runtime/runtime";
 import type { ClipItem, AppSettings } from "./types";
 import { snippet } from "../wailsjs/go/models";
@@ -111,6 +111,112 @@ function App() {
   // layout (the old appear/disappear alerts caused a one-frame flicker).
   const [saveStatus, setSaveStatus] = useState<{ kind: "idle" | "saving" | "success" | "error"; msg: string }>({ kind: "idle", msg: "" });
   const statusTimer = useRef<number>(0);
+
+  const [jwtDetails, setJwtDetails] = useState<{ header: string; payload: string } | null>(null);
+  const [jwtExpiryMsg, setJwtExpiryMsg] = useState<{ active: boolean; text: string } | null>(null);
+
+  useEffect(() => {
+    if (previewItem && previewItem.format === "jwt") {
+      DecodeJWT(previewItem.text)
+        .then((details) => {
+          if (details) {
+            setJwtDetails({ header: details.header, payload: details.payload });
+            try {
+              const parsed = JSON.parse(details.payload);
+              if (typeof parsed.exp === "number") {
+                const expTime = parsed.exp * 1000;
+                const now = Date.now();
+                const diff = expTime - now;
+                const absoluteDiff = Math.abs(diff);
+                const hours = Math.floor(absoluteDiff / 3600000);
+                const minutes = Math.floor((absoluteDiff % 3600000) / 60000);
+                if (diff > 0) {
+                  setJwtExpiryMsg({
+                    active: true,
+                    text: `Token active (expires in ${hours}h ${minutes}m)`,
+                  });
+                } else {
+                  setJwtExpiryMsg({
+                    active: false,
+                    text: `Token expired (${hours}h ${minutes}m ago)`,
+                  });
+                }
+              } else {
+                setJwtExpiryMsg(null);
+              }
+            } catch (e) {
+              setJwtExpiryMsg(null);
+            }
+          } else {
+            setJwtDetails(null);
+            setJwtExpiryMsg(null);
+          }
+        })
+        .catch((err) => {
+          console.error("JWT Decode error:", err);
+          setJwtDetails(null);
+          setJwtExpiryMsg(null);
+        });
+    } else {
+      setJwtDetails(null);
+      setJwtExpiryMsg(null);
+    }
+  }, [previewItem]);
+
+  const isDateString = (text: string): boolean => {
+    const s = text.trim();
+    const regex = /^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/;
+    const regex2 = /^\d{2}\/\d{2}\/\d{4}( \d{2}:\d{2}:\d{2})?$/;
+    const regexIso = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
+    return regex.test(s) || regex2.test(s) || regexIso.test(s);
+  };
+
+  const formatTimestampToDate = (text: string) => {
+    const val = parseInt(text.trim(), 10);
+    if (isNaN(val)) return text;
+    const d = new Date(text.trim().length === 10 ? val * 1000 : val);
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  };
+
+  const doMinify = async (item: ClipItem) => {
+    await PasteMinified(item.id);
+    await Hide();
+    setQuery("");
+    setSel(0);
+  };
+
+  const doToEpoch = async (item: ClipItem) => {
+    const s = item.text.trim();
+    let ms = 0;
+    if (/^\d{2}\/\d{2}\/\d{4}/.test(s)) {
+      const parts = s.split(/[\s/:]+/);
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const year = parseInt(parts[2], 10);
+      const hour = parts[3] ? parseInt(parts[3], 10) : 0;
+      const min = parts[4] ? parseInt(parts[4], 10) : 0;
+      const sec = parts[5] ? parseInt(parts[5], 10) : 0;
+      ms = new Date(year, month, day, hour, min, sec).getTime();
+    } else {
+      ms = Date.parse(s);
+    }
+    if (!isNaN(ms)) {
+      const epochSec = Math.floor(ms / 1000).toString();
+      await PasteText(epochSec);
+      await Hide();
+      setQuery("");
+      setSel(0);
+    }
+  };
+
+  const doToDate = async (item: ClipItem) => {
+    const formatted = formatTimestampToDate(item.text);
+    await PasteText(formatted);
+    await Hide();
+    setQuery("");
+    setSel(0);
+  };
 
   // Suppress the blur-to-hide for a short grace period right after the popup is
   // shown, otherwise the window fires a transient `blur` during the show
@@ -454,6 +560,16 @@ function App() {
 
   return (
     <div className="panel" onKeyDown={onKeyDown}>
+      {/* Dashboard Launcher button */}
+      <button
+        className="dashboard-launcher-btn"
+        onClick={() => OpenDashboard()}
+        title="Open Dashboard"
+        aria-label="Dashboard"
+      >
+        <Icon name="dashboard" size={16} />
+      </button>
+
       {/* Settings (Gear) toggle button */}
       <button
         className={`settings-toggle-btn${tab === "settings" ? " active" : ""}`}
@@ -526,10 +642,10 @@ function App() {
             {filtered.map((it, i) => {
               const isSelected = i === clampedSel;
               const isText = it.kind === 0;
-              const hasFmt = isText && (it.format === "json" || it.format === "sql");
+              const hasFmt = isText && (it.format === "json" || it.format === "sql" || it.format === "jwt" || it.format === "timestamp");
               const isImage = it.kind === 1;
               // Show a Preview button for images and for text that was truncated.
-              const canPreview = isImage || (isText && it.text.length > it.preview.length);
+              const canPreview = isImage || (isText && (it.text.length > it.preview.length || it.format === "jwt"));
               return (
                 <li
                   key={it.id}
@@ -582,7 +698,7 @@ function App() {
                     <div className="item-labels">
                       {hasFmt && (
                         <span className={`fmt-badge fmt-badge--${it.format}`}>
-                          {it.format.toUpperCase()}
+                          {it.format === "timestamp" ? "EPOCH" : it.format.toUpperCase()}
                         </span>
                       )}
                       {canPreview && (
@@ -612,13 +728,40 @@ function App() {
                           {label}
                         </button>
                       ))}
-                      {hasFmt && (
+                      {(it.format === "json" || it.format === "sql") && (
+                        <>
+                          <button
+                            className="action-btn action-btn--pretty"
+                            title="Pretty print"
+                            onClick={(e) => { e.stopPropagation(); doPretty(it); }}
+                          >
+                            Pretty
+                          </button>
+                          <button
+                            className="action-btn action-btn--minify"
+                            title="Minify"
+                            onClick={(e) => { e.stopPropagation(); doMinify(it); }}
+                          >
+                            Minify
+                          </button>
+                        </>
+                      )}
+                      {it.format === "timestamp" && (
                         <button
-                          className="action-btn action-btn--pretty"
-                          title="Pretty print"
-                          onClick={(e) => { e.stopPropagation(); doPretty(it); }}
+                          className="action-btn action-btn--todate"
+                          title="Convert to Date"
+                          onClick={(e) => { e.stopPropagation(); doToDate(it); }}
                         >
-                          Pretty
+                          To Date
+                        </button>
+                      )}
+                      {isText && isDateString(it.text) && (
+                        <button
+                          className="action-btn action-btn--toepoch"
+                          title="Convert to Epoch"
+                          onClick={(e) => { e.stopPropagation(); doToEpoch(it); }}
+                        >
+                          To Epoch
                         </button>
                       )}
                     </div>
@@ -788,12 +931,31 @@ function App() {
             >
               <Icon name="close" size={16} />
             </button>
-            {previewItem.kind === 1 ? (
+             {previewItem.kind === 1 ? (
               thumbs[previewItem.id] ? (
                 <img className="preview-image" src={thumbs[previewItem.id]} alt="preview" />
               ) : (
                 <div className="preview-loading">Loading…</div>
               )
+            ) : previewItem.format === "jwt" && jwtDetails ? (
+              <div className="jwt-preview-container">
+                {jwtExpiryMsg && (
+                  <div className={`jwt-expiry-banner ${jwtExpiryMsg.active ? "active" : "expired"}`}>
+                    <span className="pulse-indicator"></span>
+                    {jwtExpiryMsg.text}
+                  </div>
+                )}
+                <div className="jwt-split-pane">
+                  <div className="jwt-pane jwt-pane--header">
+                    <div className="jwt-pane-title">HEADER</div>
+                    <pre className="jwt-pre">{jwtDetails.header}</pre>
+                  </div>
+                  <div className="jwt-pane jwt-pane--payload">
+                    <div className="jwt-pane-title">PAYLOAD</div>
+                    <pre className="jwt-pre">{jwtDetails.payload}</pre>
+                  </div>
+                </div>
+              </div>
             ) : (
               <pre className="preview-text">{previewItem.text}</pre>
             )}

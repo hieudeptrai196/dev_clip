@@ -46,6 +46,25 @@ export namespace clip {
 
 }
 
+export namespace main {
+	
+	export class JWTDetails {
+	    header: string;
+	    payload: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new JWTDetails(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.header = source["header"];
+	        this.payload = source["payload"];
+	    }
+	}
+
+}
+
 export namespace settings {
 	
 	export class Settings {

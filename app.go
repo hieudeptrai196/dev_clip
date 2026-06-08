@@ -10,6 +10,7 @@ import (
 
 	"devclip/internal/clip"
 	"devclip/internal/engine"
+	"devclip/internal/format"
 	"devclip/internal/platform"
 	"devclip/internal/security"
 	"devclip/internal/settings"
@@ -189,6 +190,12 @@ func (a *App) PasteSnippet(id uint64, values map[string]string) error {
 	return fmt.Errorf("snippet %d not found", id)
 }
 
+// PasteText writes arbitrary text to clipboard and pastes it (bound to JS).
+func (a *App) PasteText(text string) error {
+	return a.eng.PasteText(text)
+}
+
+
 // --- Settings-related bound methods ---
 
 // GetSettings returns the current settings for the frontend (bound to JS).
@@ -287,3 +294,32 @@ func stringSliceEqual(a, b []string) bool {
 	}
 	return true
 }
+
+type JWTDetails struct {
+	Header  string `json:"header"`
+	Payload string `json:"payload"`
+}
+
+// DecodeJWT decodes a JWT token's header and payload (bound to JS).
+func (a *App) DecodeJWT(token string) (*JWTDetails, error) {
+	h, p, err := format.DecodeJWT(token)
+	if err != nil {
+		return nil, err
+	}
+	return &JWTDetails{Header: h, Payload: p}, nil
+}
+
+// PasteMinified minifies the JSON/SQL item and pastes it (bound to JS).
+func (a *App) PasteMinified(id uint64) error {
+	return a.eng.PasteMinified(id)
+}
+
+// OpenDashboard opens the stats dashboard in the user's browser (bound to JS).
+func (a *App) OpenDashboard() {
+	port := a.eng.DashboardPort()
+	if port > 0 {
+		url := fmt.Sprintf("http://127.0.0.1:%d/", port)
+		runtime.BrowserOpenURL(a.ctx, url)
+	}
+}
+
