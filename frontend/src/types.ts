@@ -13,3 +13,13 @@ export interface Snippet {
   name: string;
   content: string;
 }
+
+export interface AppSettings {
+  hotkey_mod: number;
+  hotkey_key: number;
+  hotkey_label: string;
+  blocklist: string[];
+  max_items: number;
+  auto_start: boolean;
+}
+

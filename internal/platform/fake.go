@@ -12,6 +12,8 @@ type FakePlatform struct {
 	pasteCalls []WindowRef
 	cursorX    int
 	cursorY    int
+	hotkeyMod  uint
+	hotkeyKey  uint
 }
 
 func NewFakePlatform() *FakePlatform { return &FakePlatform{} }
@@ -38,6 +40,13 @@ func (f *FakePlatform) SimulatePaste(t WindowRef) error {
 }
 func (f *FakePlatform) CursorPos() (int, int)           { return f.cursorX, f.cursorY }
 func (f *FakePlatform) RegisterHotkey(HotkeySpec) error { return nil }
+func (f *FakePlatform) UpdateHotkey(mod, key uint) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.hotkeyMod = mod
+	f.hotkeyKey = key
+	return nil
+}
 
 // --- test helpers ---
 func (f *FakePlatform) SetClipboard(c *RawClip)          { f.WriteClipboard(c) }
@@ -46,3 +55,5 @@ func (f *FakePlatform) SetForegroundWindow(w WindowRef)   { f.fgWindow = w }
 func (f *FakePlatform) EmitClipboardChange()              { f.events.OnClipboardChange() }
 func (f *FakePlatform) EmitHotkey(id int)                 { f.events.OnHotkey(id) }
 func (f *FakePlatform) PasteCalls() []WindowRef           { return f.pasteCalls }
+func (f *FakePlatform) EmitShowSettings()                 { f.events.OnShowSettings() }
+func (f *FakePlatform) EmitQuitRequested()                { f.events.OnQuitRequested() }
