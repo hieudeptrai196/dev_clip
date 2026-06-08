@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -30,6 +31,7 @@ type Engine struct {
 	onShowSettings   func()
 	onQuitRequested  func()
 	lastSelfWrite    uint64 // hash we wrote ourselves, to ignore on next change
+	restoreCancel    context.CancelFunc // cancels the pending clipboard restore goroutine
 
 	// Stats fields
 	totalCopies   int
@@ -94,9 +96,14 @@ func (e *Engine) UpdateFilter(filter *security.SecurityFilter) {
 }
 
 func (e *Engine) handleClipboardChange() {
+	// Snapshot the filter under the lock so we don't race with UpdateFilter.
+	e.mu.Lock()
+	filter := e.cfg.Filter
+	e.mu.Unlock()
+
 	// Drop captures coming from blocked apps.
 	if app, err := e.cfg.Platform.ForegroundApp(); err == nil {
-		if e.cfg.Filter.IsBlocked(app.ExePath) {
+		if filter.IsBlocked(app.ExePath) {
 			return
 		}
 	}
@@ -191,6 +198,40 @@ func (e *Engine) PasteTarget() platform.WindowRef {
 	return e.pasteTgt
 }
 
+// cancelPendingRestore cancels any in-flight clipboard restore goroutine.
+// Must be called before every paste so the old restore doesn't overwrite
+// clipboard content the user may have just copied.
+func (e *Engine) cancelPendingRestore() {
+	e.mu.Lock()
+	if e.restoreCancel != nil {
+		e.restoreCancel()
+		e.restoreCancel = nil
+	}
+	e.mu.Unlock()
+}
+
+// scheduleRestore queues a deferred write of prev back to the clipboard.
+// If another paste happens before the delay elapses, cancelPendingRestore
+// will cancel this goroutine and prev is discarded.
+func (e *Engine) scheduleRestore(prev *platform.RawClip) {
+	ctx, cancel := context.WithCancel(context.Background())
+	e.mu.Lock()
+	e.restoreCancel = cancel
+	e.mu.Unlock()
+
+	go func() {
+		select {
+		case <-time.After(e.cfg.RestoreDelay):
+			e.mu.Lock()
+			e.restoreCancel = nil
+			e.mu.Unlock()
+			_ = e.cfg.Platform.WriteClipboard(prev)
+		case <-ctx.Done():
+			// A newer paste was triggered; skip restoring the old clipboard.
+		}
+	}()
+}
+
 // PasteItem writes the given history item to the clipboard, simulates paste
 // into the remembered target window, then restores the previous clipboard.
 func (e *Engine) PasteItem(id uint64) error {
@@ -198,6 +239,9 @@ func (e *Engine) PasteItem(id uint64) error {
 	if it == nil {
 		return fmt.Errorf("item %d not found", id)
 	}
+
+	// Cancel any in-flight restore from a previous paste.
+	e.cancelPendingRestore()
 
 	prev, _ := e.cfg.Platform.ReadClipboard() // save current clipboard to restore later
 
@@ -225,10 +269,7 @@ func (e *Engine) PasteItem(id uint64) error {
 	}
 
 	if prev != nil {
-		go func() {
-			time.Sleep(e.cfg.RestoreDelay)
-			_ = e.cfg.Platform.WriteClipboard(prev)
-		}()
+		e.scheduleRestore(prev)
 	}
 	return nil
 }
@@ -239,6 +280,9 @@ func (e *Engine) PasteText(text string) error { return e.pasteText(text) }
 // pasteText writes text to the clipboard, simulates paste, then restores the
 // previous clipboard contents after RestoreDelay.
 func (e *Engine) pasteText(text string) error {
+	// Cancel any in-flight restore from a previous paste.
+	e.cancelPendingRestore()
+
 	prev, _ := e.cfg.Platform.ReadClipboard()
 	e.mu.Lock()
 	e.lastSelfWrite = clip.HashText(text)
@@ -253,10 +297,7 @@ func (e *Engine) pasteText(text string) error {
 		return err
 	}
 	if prev != nil {
-		go func() {
-			time.Sleep(e.cfg.RestoreDelay)
-			_ = e.cfg.Platform.WriteClipboard(prev)
-		}()
+		e.scheduleRestore(prev)
 	}
 	return nil
 }
@@ -403,8 +444,11 @@ func (e *Engine) ItemImagePNG(id uint64) []byte {
 
 func preview(s string) string {
 	const max = 120
-	if len(s) > max {
-		return s[:max] + "…"
+	// Use rune count, not byte count, so we don't split a multibyte UTF-8
+	// character (e.g. Vietnamese, CJK) at a byte boundary.
+	runes := []rune(s)
+	if len(runes) > max {
+		return string(runes[:max]) + "…"
 	}
 	return s
 }

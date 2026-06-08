@@ -77,6 +77,18 @@ var sqlKeywords = []string{
 	"NULL", "NOT", "IN", "LIKE", "BETWEEN", "UNION", "ALL",
 }
 
+// sqlKeywordRegexes holds precompiled whole-word case-insensitive matchers for
+// each SQL keyword. Compiled once at init time instead of on every FormatSQL
+// call to avoid the overhead of 27+ regexp compilations per invocation.
+var sqlKeywordRegexes []*regexp.Regexp
+
+func init() {
+	for _, kw := range sqlKeywords {
+		sqlKeywordRegexes = append(sqlKeywordRegexes,
+			regexp.MustCompile(`(?i)\b`+regexp.QuoteMeta(kw)+`\b`))
+	}
+}
+
 // clauseNewlines defines multi-word and single-word clauses that get a newline
 // prepended. Order matters: longer phrases must come before their sub-words.
 var clauseNewlines = []string{
@@ -98,11 +110,11 @@ func FormatSQL(text string) string {
 	// Step 1: collapse runs of whitespace to single spaces.
 	s := collapseSpaces(strings.TrimSpace(text))
 
-	// Step 2: uppercase keywords (whole-word, case-insensitive).
-	for _, kw := range sqlKeywords {
-		re := regexp.MustCompile(`(?i)\b` + regexp.QuoteMeta(kw) + `\b`)
-		s = re.ReplaceAllStringFunc(s, func(m string) string {
-			return strings.ToUpper(m)
+	// Step 2: uppercase keywords using precompiled whole-word regexes.
+	for i, re := range sqlKeywordRegexes {
+		upperKW := sqlKeywords[i] // already uppercase
+		s = re.ReplaceAllStringFunc(s, func(_ string) string {
+			return upperKW
 		})
 	}
 

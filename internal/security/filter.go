@@ -29,7 +29,5 @@ func (f *SecurityFilter) IsBlocked(exePath string) bool {
 	return ok
 }
 
-// DefaultBlocklist returns the built-in sensitive apps.
-func DefaultBlocklist() []string {
-	return []string{"1Password.exe", "Bitwarden.exe", "KeePass.exe", "KeePassXC.exe"}
-}
+// Note: the built-in blocklist is defined in internal/settings.DefaultSettings()
+// to keep a single source of truth. This package only enforces the list.

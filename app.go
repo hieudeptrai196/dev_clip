@@ -242,10 +242,12 @@ func (a *App) SaveSettings(s settings.Settings) error {
 	return nil
 }
 
-// TestHotkey checks if a hotkey combo can be registered (bound to JS).
-// Returns true if the hotkey is available.
-func (a *App) TestHotkey(mod, key uint) bool {
-	// We can't test without actually registering, so just validate inputs.
+// ValidateHotkey checks that a modifier+key combination is syntactically valid
+// (non-zero values). Note: it cannot verify whether another application has
+// already registered the same hotkey — that is only detectable when
+// RegisterHotKey is actually called during engine startup or UpdateHotkey.
+// Returns true if the values are in the acceptable range.
+func (a *App) ValidateHotkey(mod, key uint) bool {
 	return mod > 0 && key > 0
 }
 

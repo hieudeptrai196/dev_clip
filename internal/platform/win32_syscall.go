@@ -47,6 +47,7 @@ var (
 	procLoadImageW                 = user32.NewProc("LoadImageW")
 	procCreateIconFromResourceEx   = user32.NewProc("CreateIconFromResourceEx")
 	procGetCurrentThreadId         = kernel32.NewProc("GetCurrentThreadId")
+	procIsWindow                   = user32.NewProc("IsWindow")
 	procGetModuleHandleW           = kernel32.NewProc("GetModuleHandleW")
 	procQueryFullProcessImageNameW = kernel32.NewProc("QueryFullProcessImageNameW")
 	procGlobalAlloc                = kernel32.NewProc("GlobalAlloc")

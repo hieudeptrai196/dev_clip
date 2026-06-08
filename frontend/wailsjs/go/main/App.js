@@ -94,8 +94,8 @@ export function Snippets() {
   return window['go']['main']['App']['Snippets']();
 }
 
-export function TestHotkey(arg1, arg2) {
-  return window['go']['main']['App']['TestHotkey'](arg1, arg2);
+export function ValidateHotkey(arg1, arg2) {
+  return window['go']['main']['App']['ValidateHotkey'](arg1, arg2);
 }
 
 export function Thumbnail(arg1) {
