@@ -82,7 +82,7 @@ func (p *windowsPlatform) messageLoop(ready chan<- error) {
 	}
 
 	// Register Alt+V as the paste hotkey.
-	if r, _, err := procRegisterHotKey.Call(hwnd, uintptr(HotkeyPasteID), modAlt, vkV); r == 0 {
+	if r, _, err := procRegisterHotKey.Call(hwnd, uintptr(HotkeyPasteID), modControl|modShift, vkV); r == 0 {
 		ready <- err
 		return
 	}
@@ -219,8 +219,8 @@ func (p *windowsPlatform) CaptureForegroundWindow() WindowRef {
 
 func (p *windowsPlatform) SimulatePaste(target WindowRef) error {
 	if target != 0 {
-		procSetForegroundWindow.Call(uintptr(target))
-		time.Sleep(30 * time.Millisecond) // let focus settle
+		focusTargetWindow(windows.Handle(target))
+		time.Sleep(40 * time.Millisecond) // let focus settle
 	}
 	inputs := []keyboardInput{
 		makeKey(vkControl, false),
@@ -237,6 +237,29 @@ func (p *windowsPlatform) SimulatePaste(target WindowRef) error {
 		return err
 	}
 	return nil
+}
+
+// focusTargetWindow reliably brings `target` to the foreground and gives it
+// keyboard focus. A plain SetForegroundWindow call from another process is
+// usually blocked by Windows' foreground lock, so we temporarily attach our
+// input thread to the target's thread (AttachThreadInput) — the standard trick
+// for restoring focus to the editor the user was typing in before pasting.
+func focusTargetWindow(target windows.Handle) {
+	ourThread, _, _ := procGetCurrentThreadId.Call()
+
+	var targetPID uint32
+	targetThread, _, _ := procGetWindowThreadProcessId.Call(
+		uintptr(target), uintptr(unsafe.Pointer(&targetPID)))
+
+	if targetThread != 0 && targetThread != ourThread {
+		procAttachThreadInput.Call(ourThread, targetThread, 1) // attach
+		procBringWindowToTop.Call(uintptr(target))
+		procSetForegroundWindow.Call(uintptr(target))
+		procSetFocus.Call(uintptr(target))
+		procAttachThreadInput.Call(ourThread, targetThread, 0) // detach
+	} else {
+		procSetForegroundWindow.Call(uintptr(target))
+	}
 }
 
 func (p *windowsPlatform) CursorPos() (int, int) {

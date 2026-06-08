@@ -35,6 +35,10 @@ var (
 	procGetWindowThreadProcessId   = user32.NewProc("GetWindowThreadProcessId")
 	procGetCursorPos               = user32.NewProc("GetCursorPos")
 	procSendInput                  = user32.NewProc("SendInput")
+	procAttachThreadInput          = user32.NewProc("AttachThreadInput")
+	procSetFocus                   = user32.NewProc("SetFocus")
+	procBringWindowToTop           = user32.NewProc("BringWindowToTop")
+	procGetCurrentThreadId         = kernel32.NewProc("GetCurrentThreadId")
 	procQueryFullProcessImageNameW = kernel32.NewProc("QueryFullProcessImageNameW")
 	procGlobalAlloc                = kernel32.NewProc("GlobalAlloc")
 	procGlobalLock                 = kernel32.NewProc("GlobalLock")
@@ -49,7 +53,9 @@ const (
 	wmClipboardUpdate = 0x031D
 	wmHotkey          = 0x0312
 
-	modAlt = 0x0001
+	modAlt     = 0x0001
+	modControl = 0x0002
+	modShift   = 0x0004
 
 	ghMemMoveable = 0x0002
 
