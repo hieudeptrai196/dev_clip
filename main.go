@@ -32,7 +32,7 @@ func main() {
 
 	// Create application with options
 	err = wails.Run(&options.App{
-		Title:         "devclip",
+		Title:         "DevClip",
 		Width:         360,
 		Height:        480,
 		Frameless:     true,
