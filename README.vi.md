@@ -68,11 +68,11 @@
 > Windows 10/11, 64‑bit.
 
 **Cách 1 — Installer (khuyên dùng)**
-1. Tải **`DevClip-amd64-installer.exe`** ở [bản phát hành mới nhất](https://github.com/hieudeptrai196/dev_clip/releases/latest).
+1. Tải **`DevClip-amd64-installer.exe`** từ [Google Drive](https://drive.google.com/file/d/13cf3I5mmkMoevad37CFWKlE5Nn8Q_NBh/view?usp=sharing).
 2. Chạy file và làm theo các bước. App được cài kèm shortcut ở Start Menu.
 
 **Cách 2 — Portable**
-- Tải **`DevClip.exe`** ở [bản phát hành mới nhất](https://github.com/hieudeptrai196/dev_clip/releases/latest) và chạy thẳng — không cần cài.
+- Tải **`DevClip.exe`** từ [Google Drive](https://drive.google.com/file/d/15Ikq6G_P3uIJkMEomkZJQC0813fkUV0g/view?usp=sharing) và chạy thẳng — không cần cài.
 
 > ℹ️ App **chưa ký số** nên lần đầu chạy Windows SmartScreen có thể cảnh báo. Bấm **More info → Run anyway**.
 
