@@ -111,6 +111,16 @@ English · [Tiếng Việt](README.vi.md)
 
 ---
 
+## ⭐ Support
+
+If you find DevClip useful, please consider giving it a **star** ⭐ — it really helps!
+
+Or **buy me a coffee** ☕ by scanning the QR code below:
+
+<div align="center">
+  <img src="docs/donate-qr.png" alt="Buy me a coffee" width="220" />
+</div>
+
 ## 👤 Author
 
 Made by [**@hieudeptrai196**](https://github.com/hieudeptrai196).
