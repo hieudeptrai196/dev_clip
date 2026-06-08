@@ -31,6 +31,13 @@ function App() {
     };
   }, [refresh]);
 
+  // Feature 2: auto-hide when the window loses focus (Win+V behavior)
+  useEffect(() => {
+    const onBlur = () => { Hide(); };
+    window.addEventListener("blur", onBlur);
+    return () => window.removeEventListener("blur", onBlur);
+  }, []);
+
   const filtered = items.filter((it) =>
     it.preview.toLowerCase().includes(query.toLowerCase())
   );
@@ -66,6 +73,8 @@ function App() {
 
   return (
     <div className="panel" onKeyDown={onKeyDown}>
+      {/* Feature 1: close button in top-right corner */}
+      <button className="close-btn" onClick={() => Hide()} aria-label="Close">&#xd7;</button>
       <div className="search-wrap">
         <input
           ref={searchRef}
