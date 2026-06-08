@@ -10,8 +10,16 @@ export function Clear() {
   return window['go']['main']['App']['Clear']();
 }
 
+export function ClearAll() {
+  return window['go']['main']['App']['ClearAll']();
+}
+
 export function CursorPos() {
   return window['go']['main']['App']['CursorPos']();
+}
+
+export function DeleteItem(arg1) {
+  return window['go']['main']['App']['DeleteItem'](arg1);
 }
 
 export function FormatItem(arg1) {
