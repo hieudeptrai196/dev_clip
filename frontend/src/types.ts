@@ -5,4 +5,5 @@ export interface ClipItem {
   preview: string;
   createdAt: string;
   pinned: boolean;
+  format: string; // "plain" | "json" | "sql"
 }

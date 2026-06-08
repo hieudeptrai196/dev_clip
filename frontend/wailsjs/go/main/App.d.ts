@@ -6,10 +6,16 @@ export function Clear():Promise<void>;
 
 export function CursorPos():Promise<Array<number>>;
 
+export function FormatItem(arg1:number):Promise<string>;
+
 export function Hide():Promise<void>;
 
 export function History():Promise<Array<clip.ClipItem>>;
 
+export function PasteFormatted(arg1:number):Promise<void>;
+
 export function PasteItem(arg1:number):Promise<void>;
+
+export function PasteTransformed(arg1:number,arg2:string):Promise<void>;
 
 export function Thumbnail(arg1:number):Promise<string>;
