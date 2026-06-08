@@ -25,6 +25,7 @@ thay thế tính năng Win + V mặc định. Toàn bộ lịch sử clipboard c
 | Restore clipboard sau paste | Có, restore clipboard cũ sau ~200ms | UX tốt, không phá clipboard user đang giữ |
 | Detect password trong terminal | **CẮT BỎ** | Không khả thi tin cậy (không phân biệt được pass vs command). Security filter chỉ block theo app |
 | Testing | TDD cho core Go logic, manual checklist cho Win32 | Win32/clipboard khó test tự động |
+| Cross-platform | Tách `Platform` interface ngay từ MVP Windows | macOS (làm sau) là drop-in, không phải viết lại Core. Spec macOS riêng: [2026-06-08-devclip-macos-design.md](2026-06-08-devclip-macos-design.md) |
 
 ## 3. Kiến trúc (3 lớp)
 
@@ -54,9 +55,35 @@ thay thế tính năng Win + V mặc định. Toàn bộ lịch sử clipboard c
 ```
 
 ### Nguyên tắc tách lớp
-- **Lớp 1** là nơi duy nhất gọi syscall. Mọi tương tác Win32 đi qua interface để Lớp 2 mock được khi test.
+- **Lớp 1** là nơi duy nhất gọi syscall. Toàn bộ Lớp 1 ẩn sau **interface `Platform`** (xem dưới) → Lớp 2 mock được khi test, và macOS sau này chỉ cần viết thêm một implementation.
 - **Lớp 2** thuần Go, không import syscall trực tiếp → TDD được toàn bộ.
 - **Lớp 3** chỉ là cầu nối, không chứa business logic.
+
+### Platform interface (cross-platform từ ngày đầu)
+
+Lớp 1 hiện thực interface này; Core Engine chỉ nói chuyện qua đây, không biết Windows hay macOS:
+
+```go
+type Platform interface {
+    Start(ev PlatformEvents) error   // win: message loop (push); mac: poll timer + event tap
+    Stop()
+    ReadClipboard() (*RawClip, error)
+    WriteClipboard(*RawClip) error
+    ForegroundApp() (AppInfo, error) // win: exe path; mac: bundleID
+    SimulatePaste(target WindowRef) error // win: Ctrl+V; mac: Cmd+V
+    CursorPos() (x, y int)
+    RegisterHotkey(spec HotkeySpec) error
+}
+
+type PlatformEvents interface {
+    OnClipboardChange()  // win gọi từ WM_CLIPBOARDUPDATE; mac gọi khi changeCount đổi
+    OnHotkey(id int)
+}
+```
+
+- Khác biệt **push (Windows event) vs poll (macOS changeCount)** bị giấu sau `Start()`; cả hai chỉ phát `OnClipboardChange()`.
+- File layout: `platform/platform.go` (interface), `platform/windows.go` (`//go:build windows`), `platform/darwin.go` (`//go:build darwin`, làm sau).
+- Implementation Windows là phần được build/test trong MVP này. macOS có spec + plan riêng.
 
 ## 4. Cấu trúc dữ liệu
 
