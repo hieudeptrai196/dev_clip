@@ -18,6 +18,10 @@
 
 ## 📸 Ảnh chụp màn hình
 
+### Dashboard Web Cục Bộ
+![Web Dashboard](docs/dashboard.png)
+
+### Ứng dụng Desktop
 | Lịch sử Clipboard | Cài đặt |
 |---|---|
 | ![Lịch sử Clipboard](docs/history.png) | ![Cài đặt](docs/settings.png) |
@@ -27,12 +31,14 @@
 
 ## ✨ Điểm nổi bật
 
-- 🧑‍💻 **Hiểu định dạng** — tự nhận diện **JSON** và **SQL**, pretty‑print khi dán.
-- 🔤 **Biến đổi chuỗi** — `UPPER`, `lower`, `camelCase`, `snake_case`, `kebab-case`, **Base64**.
+- 🧑‍💻 **Nhận biết định dạng** — tự động nhận diện **JSON**, **SQL**, **JWT**, và **Timestamp** (nhãn gắn tự động).
+- 🔑 **Giải mã JWT** — hiển thị Header & Payload trực quan dạng split-view kèm banner trạng thái hết hạn thời gian thực.
+- 📅 **Chuyển đổi Epoch** — chuyển đổi nhanh Unix Timestamp sang ngày giờ địa phương và ngược lại.
+- 🗜️ **JSON/SQL Minifier** — nén code JSON và truy vấn SQL thành một dòng duy nhất khi dán.
+- 📊 **Dashboard Web cục bộ** — mở trang dashboard giao diện glassmorphic dark-mode hiển thị biểu đồ phân bố và tần suất sao chép.
 - 📌 **Ghim & sắp xếp** — ghim item lên đầu và **kéo‑thả** để xếp lại thứ tự.
 - ⌨️ **Hotkey tuỳ chỉnh + tìm kiếm** — đổi phím tắt toàn cục và lọc lịch sử khi gõ.
-- 🔍 **Preview toàn màn hình** — mở full ảnh hoặc text dài trong popup lớn.
-- 🗔 **Nằm ở khay hệ thống** — dán thẳng vào cửa sổ bạn đang làm việc.
+- 🔍 **Preview toàn màn hình** — mở full ảnh, text dài, hoặc token JWT đã giải mã trong popup lớn.
 
 ---
 
@@ -44,8 +50,11 @@
 | Dung lượng lịch sử | — | **10–500 (tuỳ chỉnh)** |
 | Hotkey | Cố định `Win+V` | **Đổi được** |
 | Tìm kiếm | ❌ | ✅ |
-| Format code (JSON/SQL) | ❌ | ✅ |
-| Biến đổi chuỗi | ❌ | ✅ |
+| Format code (JSON/SQL) | ❌ | ✅ **(Pretty & Nén)** |
+| Bộ giải mã JWT | ❌ | ✅ **(Split‑view & hạn token)** |
+| Bộ đổi Timestamp | ❌ | ✅ **(Epoch ⇄ Ngày cục bộ)** |
+| Dashboard Web thống kê | ❌ | ✅ **(Giao diện web trực quan)** |
+| Biến đổi chuỗi | ❌ | ✅ (`UPPER`, `camel`, `snake`, v.v.) |
 | Ghim | ✅ | ✅ + **kéo‑thả sắp xếp** |
 | Preview toàn màn hình | ❌ | ✅ |
 | Mã nguồn mở | ❌ | ✅ |
@@ -71,17 +80,18 @@
 
 ## 📖 Cách dùng
 
-| Phím tắt | Tác dụng |
+| Phím tắt / Hành động | Tác dụng |
 |---|---|
 | `Alt + V` | Mở popup tại con trỏ |
 | `↑` / `↓` | Di chuyển lựa chọn |
 | `Enter` | Dán item đang chọn |
 | `Esc` | Đóng |
+| **Nút Dashboard** 📊 | Click vào biểu tượng bên cạnh Settings Gear để mở Dashboard trên trình duyệt web |
 
 1. **Copy** bất cứ thứ gì (text hoặc ảnh) như bình thường.
 2. Bấm **`Alt + V`** — popup hiện ngay tại con trỏ kèm lịch sử.
 3. Chọn một item rồi bấm **Enter** (hoặc click) để dán vào app bạn đang làm.
-4. **Hover** vào item để ghim 📌 / xoá 🗑; bấm icon **con mắt** để xem preview toàn màn hình.
+4. **Hover** vào item để ghim 📌 / xoá 🗑; bấm icon **con mắt** để xem preview toàn màn hình hoặc xem JWT giải mã.
 5. **Icon ở khay hệ thống** có menu chuột phải (Show / Settings / Quit); double‑click để mở popup.
 6. Vào **⚙ Settings** để đổi hotkey, dung lượng lịch sử, hoặc bật khởi động cùng Windows.
 
@@ -102,12 +112,13 @@
 **Thao tác item**
 - **Ghim** lên đầu (không bị giới hạn lịch sử đẩy ra) và **kéo‑thả sắp xếp** item đã ghim.
 - **Xoá** từng item hoặc **Clear all**.
-- **Preview toàn màn hình** cho text dài và ảnh.
+- **Preview toàn màn hình** cho text dài, hình ảnh, và token JWT.
 
-**Formatter (cho dev)**
-- Nhận diện **JSON / SQL** và gắn badge.
-- Pretty‑print **JSON** (thụt lề) và **SQL** (viết hoa từ khoá, xuống dòng theo mệnh đề).
-- Biến đổi & dán: `UPPER`, `lower`, `camelCase`, `snake_case`, `kebab-case`, **Base64**.
+**Công cụ cho lập trình viên**
+- **JSON / SQL Formatter**: Pretty-print (căn lề đẹp) và **Minify** (nén thành 1 dòng) khi dán.
+- **JWT Decoder**: Giải mã token thành Header/Payload trong preview với banner hiển thị thời gian sống còn lại của token.
+- **Timestamp Converter**: Đọc số copy và hiển thị Epoch timestamp, hỗ trợ dán dạng ngày giờ local, hoặc chuyển chuỗi ngày giờ local sang Epoch.
+- **Local Web Dashboard**: Chạy web server nội bộ hiển thị các thống kê định dạng, biểu đồ cột thời gian copy, và nhật ký lịch sử.
 
 **Tích hợp hệ thống**
 - Icon ở **khay hệ thống** có menu + double‑click để mở.

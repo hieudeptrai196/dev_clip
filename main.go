@@ -5,6 +5,7 @@ import (
 	"embed"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -20,18 +21,27 @@ var assets embed.FS
 
 func main() {
 	// Single-instance guard: prevent multiple copies of DevClip running.
-	release, err := platform.EnsureSingleInstance()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(0)
+	isWails := false
+	for _, arg := range os.Args {
+		if strings.Contains(strings.ToLower(arg), "wails") {
+			isWails = true
+			break
+		}
 	}
-	defer release()
+	if !isWails {
+		release, err := platform.EnsureSingleInstance()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(0)
+		}
+		defer release()
+	}
 
 	// Create an instance of the app structure
 	app := NewApp()
 
 	// Create application with options
-	err = wails.Run(&options.App{
+	err := wails.Run(&options.App{
 		Title:         "DevClip",
 		Width:         360,
 		Height:        480,

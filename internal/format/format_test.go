@@ -231,3 +231,79 @@ func TestTransform_Base64DecodeInvalid(t *testing.T) {
 func TestTransform_UnknownOp(t *testing.T) {
 	assert.Equal(t, "hello", Transform("hello", "unknownop"))
 }
+
+// ─── Timestamp ───────────────────────────────────────────────────────────────
+
+func TestDetectTimestamp(t *testing.T) {
+	tSec, isMs, ok := DetectTimestamp("1717886400")
+	assert.True(t, ok)
+	assert.False(t, isMs)
+	assert.Equal(t, int64(1717886400), tSec.Unix())
+
+	tMs, isMs, ok := DetectTimestamp("1717886400000")
+	assert.True(t, ok)
+	assert.True(t, isMs)
+	assert.Equal(t, int64(1717886400000), tMs.UnixMilli())
+
+	_, _, ok = DetectTimestamp("17178864")
+	assert.False(t, ok)
+	_, _, ok = DetectTimestamp("1717886400abc")
+	assert.False(t, ok)
+}
+
+func TestConvertToTimestamp(t *testing.T) {
+	ts, err := ConvertToTimestamp("2026-06-08 22:26:02")
+	require.NoError(t, err)
+	assert.NotEmpty(t, ts)
+
+	_, err = ConvertToTimestamp("invalid date")
+	assert.Error(t, err)
+}
+
+// ─── JWT ─────────────────────────────────────────────────────────────────────
+
+func TestIsJWT(t *testing.T) {
+	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256","typ":"JWT"}`))
+	payload := base64.RawURLEncoding.EncodeToString([]byte(`{"sub":"1234567890","name":"John Doe","iat":1516239022}`))
+	signature := "signature"
+	jwtToken := header + "." + payload + "." + signature
+
+	assert.True(t, IsJWT(jwtToken))
+	assert.False(t, IsJWT("not.a.jwt"))
+	assert.False(t, IsJWT("eyJ.payload"))
+}
+
+func TestDecodeJWT(t *testing.T) {
+	headerStr := `{"alg":"HS256","typ":"JWT"}`
+	payloadStr := `{"sub":"1234567890","name":"John Doe","iat":1516239022}`
+	header := base64.RawURLEncoding.EncodeToString([]byte(headerStr))
+	payload := base64.RawURLEncoding.EncodeToString([]byte(payloadStr))
+	signature := "signature"
+	jwtToken := header + "." + payload + "." + signature
+
+	hOut, pOut, err := DecodeJWT(jwtToken)
+	require.NoError(t, err)
+	assert.Contains(t, hOut, "HS256")
+	assert.Contains(t, pOut, "John Doe")
+
+	_, _, err = DecodeJWT("invalid")
+	assert.Error(t, err)
+}
+
+// ─── Minify ──────────────────────────────────────────────────────────────────
+
+func TestMinifyJSON(t *testing.T) {
+	input := `{"a": 1, "b": 2}`
+	out, err := MinifyJSON(input)
+	require.NoError(t, err)
+	assert.Equal(t, `{"a":1,"b":2}`, out)
+
+	_, err = MinifyJSON(`{invalid`)
+	assert.Error(t, err)
+}
+
+func TestMinifySQL(t *testing.T) {
+	input := "SELECT * \nFROM users \nWHERE id = 1"
+	out := MinifySQL(input)
+	assert.Equal(t, "SELECT * FROM users WHERE id = 1", out)
+}

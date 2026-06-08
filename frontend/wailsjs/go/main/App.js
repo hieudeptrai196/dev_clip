@@ -18,6 +18,10 @@ export function CursorPos() {
   return window['go']['main']['App']['CursorPos']();
 }
 
+export function DecodeJWT(arg1) {
+  return window['go']['main']['App']['DecodeJWT'](arg1);
+}
+
 export function DeleteItem(arg1) {
   return window['go']['main']['App']['DeleteItem'](arg1);
 }
@@ -42,6 +46,10 @@ export function History() {
   return window['go']['main']['App']['History']();
 }
 
+export function OpenDashboard() {
+  return window['go']['main']['App']['OpenDashboard']();
+}
+
 export function PasteFormatted(arg1) {
   return window['go']['main']['App']['PasteFormatted'](arg1);
 }
@@ -50,8 +58,16 @@ export function PasteItem(arg1) {
   return window['go']['main']['App']['PasteItem'](arg1);
 }
 
+export function PasteMinified(arg1) {
+  return window['go']['main']['App']['PasteMinified'](arg1);
+}
+
 export function PasteSnippet(arg1, arg2) {
   return window['go']['main']['App']['PasteSnippet'](arg1, arg2);
+}
+
+export function PasteText(arg1) {
+  return window['go']['main']['App']['PasteText'](arg1);
 }
 
 export function PasteTransformed(arg1, arg2) {

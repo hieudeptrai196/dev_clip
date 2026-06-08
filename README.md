@@ -18,6 +18,10 @@ English · [Tiếng Việt](README.vi.md)
 
 ## 📸 Screenshots
 
+### Local Web Dashboard
+![Web Dashboard](docs/dashboard.png)
+
+### Desktop App
 | Clipboard History | Settings |
 |---|---|
 | ![Clipboard History](docs/history.png) | ![Settings](docs/settings.png) |
@@ -27,12 +31,14 @@ English · [Tiếng Việt](README.vi.md)
 
 ## ✨ Highlights
 
-- 🧑‍💻 **Format‑aware** — auto‑detects **JSON** and **SQL**, pretty‑prints them on paste.
-- 🔤 **String transforms** — `UPPER`, `lower`, `camelCase`, `snake_case`, `kebab-case`, **Base64**.
+- 🧑‍💻 **Format‑aware** — auto‑detects **JSON**, **SQL**, **JWT**, and **Timestamps** with automatic badge labeling.
+- 🔑 **JWT Decoder** — decodes tokens into pretty‑printed Header & Payload split-view alongside a live expiration status banner.
+- 📅 **Epoch Converter** — instantly converts Unix timestamps to local dates, and local dates back to epoch values.
+- 🗜️ **JSON/SQL Minifier** — compresses JSON and SQL snippets into a single line on paste.
+- 📊 **Local Web Dashboard** — opens a premium glassmorphic web dashboard showing session stats and real-time activity/format charts.
 - 📌 **Pin & reorder** — pin items to the top and **drag‑and‑drop** to arrange them.
 - ⌨️ **Custom hotkey + search** — change the global shortcut and filter history as you type.
-- 🔍 **Fullscreen preview** — open the full image or long text in a large popup.
-- 🗔 **Lives in the tray** — pastes straight into the window you were working in.
+- 🔍 **Fullscreen preview** — open the full image, long text, or decoded JWT in a large popup.
 
 ---
 
@@ -44,8 +50,11 @@ English · [Tiếng Việt](README.vi.md)
 | History size | — | **10–500 (configurable)** |
 | Hotkey | Fixed `Win+V` | **Customizable** |
 | Search | ❌ | ✅ |
-| Code formatting (JSON/SQL) | ❌ | ✅ |
-| String transforms | ❌ | ✅ |
+| Code formatting (JSON/SQL) | ❌ | ✅ **(Pretty & Minify)** |
+| JWT Decoder | ❌ | ✅ **(Split‑view & expiry banner)** |
+| Timestamp Converter | ❌ | ✅ **(Epoch ⇄ Local Date)** |
+| Local Stats Dashboard | ❌ | ✅ **(Web UI with real-time charts)** |
+| String transforms | ❌ | ✅ (`UPPER`, `camel`, `snake`, etc.) |
 | Pin | ✅ | ✅ + **drag to reorder** |
 | Fullscreen preview | ❌ | ✅ |
 | Open source | ❌ | ✅ |
@@ -71,17 +80,18 @@ English · [Tiếng Việt](README.vi.md)
 
 ## 📖 Usage
 
-| Shortcut | Action |
+| Shortcut / Action | Action |
 |---|---|
 | `Alt + V` | Open the popup at the cursor |
 | `↑` / `↓` | Move selection |
 | `Enter` | Paste the selected item |
 | `Esc` | Close |
+| **Dashboard Button** 📊 | Click the icon next to settings gear to open the local web dashboard |
 
 1. **Copy** anything (text or image) as usual.
 2. Press **`Alt + V`** — the popup appears at your cursor with the history.
 3. Pick an item and press **Enter** (or click) to paste it into the app you were in.
-4. **Hover** an item to pin 📌 / delete 🗑; click the **eye** icon for a fullscreen preview.
+4. **Hover** an item to pin 📌 / delete 🗑; click the **eye** icon for a fullscreen preview / JWT split-view.
 5. The **tray icon** has a right‑click menu (Show / Settings / Quit); double‑click it to open the popup.
 6. Open **⚙ Settings** to change the hotkey, history size, or enable start‑with‑Windows.
 
@@ -102,16 +112,17 @@ English · [Tiếng Việt](README.vi.md)
 **Item actions**
 - **Pin** to top (survives history limits) and **drag‑to‑reorder** pinned items.
 - **Delete** a single item or **Clear all**.
-- **Fullscreen preview** of long text and images.
+- **Fullscreen preview** of long text, images, and decoded JWT tokens.
 
-**Formatter (for devs)**
-- Detects **JSON / SQL** and shows a badge.
-- Pretty‑print **JSON** (indented) and **SQL** (uppercased keywords, clause line‑breaks).
-- Transform & paste: `UPPER`, `lower`, `camelCase`, `snake_case`, `kebab-case`, **Base64**.
+**Developer Tools**
+- **JSON / SQL Formatter**: Pretty-print (indents) and **Minify** (compresses to 1 line) on paste.
+- **JWT Decoder**: Decodes tokens into beautiful Header/Payload panels with live expiration banner showing remaining/elapsed time.
+- **Timestamp Converter**: Displays numeric copy values as Epoch timestamps, enabling one-click paste as local Date, or converting local Dates to Epochs.
+- **Local Web Dashboard**: Bounds an HTTP server to a free local port, serving interactive format distributions, hourly copy line charts, and active clip logs.
 
 **System integration**
 - **System‑tray** icon with menu + double‑click to open.
-- **Single instance**, **minimize‑to‑tray** on close, optional **start with Windows**.
+- **Single instance** (bypassed for Wails CLI bindings), **minimize‑to‑tray** on close, optional **start with Windows**.
 
 ---
 
