@@ -46,3 +46,24 @@ export namespace clip {
 
 }
 
+export namespace snippet {
+	
+	export class Snippet {
+	    id: number;
+	    name: string;
+	    content: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Snippet(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.content = source["content"];
+	    }
+	}
+
+}
+
