@@ -30,8 +30,20 @@ export function PasteItem(arg1) {
   return window['go']['main']['App']['PasteItem'](arg1);
 }
 
+export function PasteSnippet(arg1, arg2) {
+  return window['go']['main']['App']['PasteSnippet'](arg1, arg2);
+}
+
 export function PasteTransformed(arg1, arg2) {
   return window['go']['main']['App']['PasteTransformed'](arg1, arg2);
+}
+
+export function SnippetPlaceholders(arg1) {
+  return window['go']['main']['App']['SnippetPlaceholders'](arg1);
+}
+
+export function Snippets() {
+  return window['go']['main']['App']['Snippets']();
 }
 
 export function Thumbnail(arg1) {
