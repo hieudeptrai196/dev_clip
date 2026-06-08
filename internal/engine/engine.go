@@ -425,9 +425,17 @@ func (e *Engine) DeleteItem(id uint64) {
 	}
 }
 
-// ClearAll removes all history (including pinned) and notifies the UI.
+// ClearAll removes all history (including pinned), resets the session stats
+// shown on the dashboard, and notifies the UI.
 func (e *Engine) ClearAll() {
 	e.cfg.Store.ClearAll()
+	e.mu.Lock()
+	e.totalCopies = 0
+	e.typeCounts = make(map[string]int)
+	e.textFrequency = make(map[uint64]int)
+	e.textPreviews = make(map[uint64]string)
+	e.hourlyCopies = [24]int{}
+	e.mu.Unlock()
 	if e.onChange != nil {
 		e.onChange()
 	}
