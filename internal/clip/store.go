@@ -164,6 +164,49 @@ func (s *ClipStore) Clear() {
 	}
 }
 
+// DeleteItem removes a single entry (pinned or unpinned) by ID and clears its
+// payload for GC. No-op if the ID is not found.
+func (s *ClipStore) DeleteItem(id uint64) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, it := range s.pinned {
+		if it.ID == id {
+			delete(s.byHash, it.Hash)
+			it.Text = ""
+			it.Image = nil
+			s.pinned = append(s.pinned[:i], s.pinned[i+1:]...)
+			return
+		}
+	}
+	for i, it := range s.items {
+		if it.ID == id {
+			delete(s.byHash, it.Hash)
+			it.Text = ""
+			it.Image = nil
+			s.items = append(s.items[:i], s.items[i+1:]...)
+			return
+		}
+	}
+}
+
+// ClearAll removes everything, including pinned items, and releases memory.
+// This is the "clear all history" action (unlike Clear, which keeps pins).
+func (s *ClipStore) ClearAll() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, it := range s.items {
+		it.Text = ""
+		it.Image = nil
+	}
+	for _, it := range s.pinned {
+		it.Text = ""
+		it.Image = nil
+	}
+	s.items = nil
+	s.pinned = nil
+	s.byHash = make(map[uint64]*ClipItem, s.cap)
+}
+
 // bumpID returns the next monotonic ID. Caller must hold the lock.
 func (s *ClipStore) bumpID() uint64 {
 	s.nextID++

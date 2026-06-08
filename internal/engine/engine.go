@@ -297,6 +297,22 @@ func (e *Engine) ReorderPins(ids []uint64) {
 	}
 }
 
+// DeleteItem removes a single history entry by ID and notifies the UI.
+func (e *Engine) DeleteItem(id uint64) {
+	e.cfg.Store.DeleteItem(id)
+	if e.onChange != nil {
+		e.onChange()
+	}
+}
+
+// ClearAll removes all history (including pinned) and notifies the UI.
+func (e *Engine) ClearAll() {
+	e.cfg.Store.ClearAll()
+	if e.onChange != nil {
+		e.onChange()
+	}
+}
+
 // ItemImagePNG returns the PNG bytes of an image item, or nil if not an image.
 func (e *Engine) ItemImagePNG(id uint64) []byte {
 	it := e.cfg.Store.Get(id)

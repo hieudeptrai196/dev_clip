@@ -133,6 +133,12 @@ func (a *App) TogglePin(id uint64) { a.eng.TogglePin(id) }
 // (bound to JS). Used by drag-and-drop reordering in the UI.
 func (a *App) ReorderPins(ids []uint64) { a.eng.ReorderPins(ids) }
 
+// DeleteItem removes a single history item by id (bound to JS).
+func (a *App) DeleteItem(id uint64) { a.eng.DeleteItem(id) }
+
+// ClearAll removes the entire history, including pinned items (bound to JS).
+func (a *App) ClearAll() { a.eng.ClearAll() }
+
 // Thumbnail returns a base64 PNG data URL for an image item (bound to JS),
 // or an empty string if the item is not an image. Loaded lazily by the UI so
 // History() stays small.

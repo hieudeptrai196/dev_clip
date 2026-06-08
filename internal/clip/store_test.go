@@ -147,6 +147,43 @@ func TestClearKeepsPinnedItems(t *testing.T) {
 	assert.True(t, items[0].Pinned)
 }
 
+func TestDeleteItemRemovesUnpinned(t *testing.T) {
+	s := NewStore(5)
+	s.Push(textItem("a"))
+	s.Push(textItem("b"))
+	bID := s.List()[0].ID
+
+	s.DeleteItem(bID)
+
+	items := s.List()
+	require.Len(t, items, 1)
+	assert.Equal(t, "a", items[0].Text)
+	// Same text can be re-added after delete (dedup map was cleaned).
+	s.Push(textItem("b"))
+	assert.Len(t, s.List(), 2)
+}
+
+func TestDeleteItemRemovesPinned(t *testing.T) {
+	s := NewStore(5)
+	s.Push(textItem("a"))
+	s.TogglePin(s.List()[0].ID)
+	require.True(t, s.List()[0].Pinned)
+
+	s.DeleteItem(s.List()[0].ID)
+	assert.Len(t, s.List(), 0)
+}
+
+func TestClearAllRemovesEverythingIncludingPinned(t *testing.T) {
+	s := NewStore(5)
+	s.Push(textItem("a"))
+	s.TogglePin(s.List()[0].ID)
+	s.Push(textItem("b"))
+
+	s.ClearAll()
+
+	assert.Len(t, s.List(), 0)
+}
+
 func TestConcurrentPushIsSafe(t *testing.T) {
 	s := NewStore(100)
 	done := make(chan struct{})
