@@ -10,6 +10,10 @@ function App() {
   const [sel, setSel] = useState(0);
   const searchRef = useRef<HTMLInputElement>(null);
   const itemRefs = useRef<(HTMLLIElement | null)[]>([]);
+  // Suppress the blur-to-hide for a short grace period right after the popup is
+  // shown, otherwise the window fires a transient `blur` during the show
+  // transition and the popup closes itself immediately on Alt+V.
+  const ignoreBlurUntil = useRef(0);
 
   const refresh = useCallback(async () => {
     const list = (await History()) as unknown as ClipItem[];
@@ -20,6 +24,7 @@ function App() {
     refresh();
     const offClip = EventsOn("clip:changed", refresh);
     const offShow = EventsOn("popup:show", () => {
+      ignoreBlurUntil.current = Date.now() + 600;
       refresh();
       setQuery("");
       setSel(0);
@@ -33,7 +38,10 @@ function App() {
 
   // Feature 2: auto-hide when the window loses focus (Win+V behavior)
   useEffect(() => {
-    const onBlur = () => { Hide(); };
+    const onBlur = () => {
+      if (Date.now() < ignoreBlurUntil.current) return; // grace period after show
+      Hide();
+    };
     window.addEventListener("blur", onBlur);
     return () => window.removeEventListener("blur", onBlur);
   }, []);
