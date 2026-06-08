@@ -46,6 +46,33 @@ export namespace clip {
 
 }
 
+export namespace settings {
+	
+	export class Settings {
+	    hotkey_mod: number;
+	    hotkey_key: number;
+	    hotkey_label: string;
+	    blocklist: string[];
+	    max_items: number;
+	    auto_start: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new Settings(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.hotkey_mod = source["hotkey_mod"];
+	        this.hotkey_key = source["hotkey_key"];
+	        this.hotkey_label = source["hotkey_label"];
+	        this.blocklist = source["blocklist"];
+	        this.max_items = source["max_items"];
+	        this.auto_start = source["auto_start"];
+	    }
+	}
+
+}
+
 export namespace snippet {
 	
 	export class Snippet {

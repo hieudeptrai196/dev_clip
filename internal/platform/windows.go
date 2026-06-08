@@ -5,6 +5,8 @@ package platform
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"syscall"
 	"time"
 	"unsafe"
@@ -15,6 +17,7 @@ import (
 type windowsPlatform struct {
 	events PlatformEvents
 	hwnd   windows.Handle
+	trayNID notifyIconData // tray icon data, kept for NIM_DELETE on stop
 }
 
 // NewPlatform returns the Windows implementation.
@@ -27,7 +30,10 @@ func (p *windowsPlatform) Start(ev PlatformEvents) error {
 	return <-ready
 }
 
-func (p *windowsPlatform) Stop() { /* message loop ends on process exit */ }
+func (p *windowsPlatform) Stop() {
+	// Remove tray icon before exit.
+	shellNotifyIcon(nimDelete, &p.trayNID)
+}
 
 func (p *windowsPlatform) messageLoop(ready chan<- error) {
 	// CRITICAL: the window + GetMessage must stay on one OS thread.
@@ -90,6 +96,12 @@ func (p *windowsPlatform) messageLoop(ready chan<- error) {
 		return
 	}
 
+	// Setup system tray icon.
+	if trayErr := p.addTrayIcon(); trayErr != nil {
+		// Non-fatal: log but continue without tray.
+		fmt.Fprintf(os.Stderr, "warning: tray icon failed: %v\n", trayErr)
+	}
+
 	ready <- nil
 
 	var m msg
@@ -107,6 +119,118 @@ func (p *windowsPlatform) messageLoop(ready chan<- error) {
 // import cycle (platform must not import engine).
 const HotkeyPasteID = 1
 
+// addTrayIcon creates the system tray icon with a tooltip.
+func (p *windowsPlatform) addTrayIcon() error {
+	p.trayNID = notifyIconData{
+		HWnd:             uintptr(p.hwnd),
+		UID:              1,
+		UFlags:           nifMessage | nifIcon | nifTip,
+		UCallbackMessage: wmTrayIcon,
+	}
+	setTipText(&p.trayNID, "DevClip — Alt+V clipboard manager")
+
+	// Try to load icon from the exe's directory (build/appicon.ico).
+	icon := loadTrayIcon()
+	if icon != 0 {
+		p.trayNID.HIcon = icon
+	} else {
+		// Fallback: no icon flag if we can't load one.
+		p.trayNID.UFlags = nifMessage | nifTip
+	}
+
+	return shellNotifyIcon(nimAdd, &p.trayNID)
+}
+
+// loadTrayIcon attempts to load the tray icon from module resources or file.
+func loadTrayIcon() uintptr {
+	// 1. Try loading from executable resources (IDI_ICON is usually 102 in Wails, IDI_APPLICATION is 1)
+	inst, _, _ := procGetModuleHandleW.Call(0)
+	if inst != 0 {
+		// Try ID 102 first
+		h, _, _ := procLoadImageW.Call(
+			inst,
+			102,
+			imageIcon,
+			16, 16,
+			0,
+		)
+		if h != 0 {
+			return h
+		}
+		// Try ID 1
+		h, _, _ = procLoadImageW.Call(
+			inst,
+			1,
+			imageIcon,
+			16, 16,
+			0,
+		)
+		if h != 0 {
+			return h
+		}
+	}
+
+	// 2. Fall back to loading appicon.ico from the exe's directory
+	exe, err := os.Executable()
+	if err != nil {
+		return 0
+	}
+	icoPath := filepath.Join(filepath.Dir(exe), "appicon.ico")
+	if _, err := os.Stat(icoPath); err == nil {
+		pathPtr, err := windows.UTF16PtrFromString(icoPath)
+		if err == nil {
+			h, _, _ := procLoadImageW.Call(
+				0,
+				uintptr(unsafe.Pointer(pathPtr)),
+				imageIcon,
+				16, 16,
+				lrLoadFromFile,
+			)
+			return h
+		}
+	}
+	return 0
+}
+
+// showTrayMenu displays the right-click context menu at the cursor.
+func (p *windowsPlatform) showTrayMenu() {
+	hMenu, _, _ := procCreatePopupMenu.Call()
+	if hMenu == 0 {
+		return
+	}
+	defer procDestroyMenu.Call(hMenu)
+
+	appendMenuItem(hMenu, idmShow, "Show DevClip")
+	appendMenuItem(hMenu, idmSettings, "Settings")
+	appendMenuSeparator(hMenu)
+	appendMenuItem(hMenu, idmQuit, "Quit")
+
+	// SetForegroundWindow is required before TrackPopupMenu on Windows,
+	// otherwise the menu won't dismiss when clicking elsewhere.
+	procSetForegroundWindow.Call(uintptr(p.hwnd))
+
+	x, y := getCursorPos()
+	procTrackPopupMenuEx.Call(
+		hMenu,
+		tpmLeftButton,
+		uintptr(x), uintptr(y),
+		uintptr(p.hwnd),
+		0,
+	)
+
+	// Post a dummy message to force the message loop to process menu result.
+	procPostMessageW.Call(uintptr(p.hwnd), 0, 0, 0)
+}
+
+func appendMenuItem(hMenu uintptr, id uint, text string) {
+	textPtr, _ := windows.UTF16PtrFromString(text)
+	procAppendMenuW.Call(hMenu, mfString, uintptr(id), uintptr(unsafe.Pointer(textPtr)))
+}
+
+func appendMenuSeparator(hMenu uintptr) {
+	procAppendMenuW.Call(hMenu, mfSeparator, 0, 0)
+}
+
 func (p *windowsPlatform) wndProc(hwnd, message, wParam, lParam uintptr) uintptr {
 	switch message {
 	case wmClipboardUpdate:
@@ -119,9 +243,60 @@ func (p *windowsPlatform) wndProc(hwnd, message, wParam, lParam uintptr) uintptr
 			p.events.OnHotkey(int(wParam))
 		}
 		return 0
+	case wmTrayIcon:
+		// lParam holds the mouse message that triggered the callback.
+		switch lParam {
+		case wmRButtonUp:
+			p.showTrayMenu()
+		case wmLButtonDblClk:
+			// Double-click tray icon → show popup (same as hotkey).
+			if p.events != nil {
+				p.events.OnHotkey(HotkeyPasteID)
+			}
+		}
+		return 0
+	case wmCommand:
+		// Menu item selected from tray context menu.
+		menuID := int(wParam & 0xFFFF)
+		switch menuID {
+		case idmShow:
+			if p.events != nil {
+				p.events.OnHotkey(HotkeyPasteID)
+			}
+		case idmSettings:
+			if p.events != nil {
+				p.events.OnShowSettings()
+			}
+		case idmQuit:
+			shellNotifyIcon(nimDelete, &p.trayNID)
+			if p.events != nil {
+				p.events.OnQuitRequested()
+			}
+		}
+		return 0
+	case wmUpdateHotkey:
+		// Re-register hotkey on the message-loop thread.
+		// wParam = new modifiers, lParam = new key code.
+		procUnregisterHotKey.Call(uintptr(p.hwnd), uintptr(HotkeyPasteID))
+		procRegisterHotKey.Call(uintptr(p.hwnd), uintptr(HotkeyPasteID), wParam, lParam)
+		return 0
+	case wmDestroy:
+		shellNotifyIcon(nimDelete, &p.trayNID)
+		return 0
 	}
 	r, _, _ := procDefWindowProcW.Call(hwnd, message, wParam, lParam)
 	return r
+}
+
+// UpdateHotkey re-registers the paste hotkey with a new modifier+key combo.
+// The actual UnregisterHotKey+RegisterHotKey calls must happen on the message
+// loop thread, so we post a custom message (wmUpdateHotkey) to the hidden window.
+func (p *windowsPlatform) UpdateHotkey(mod, key uint) error {
+	if p.hwnd == 0 {
+		return errors.New("platform not started")
+	}
+	procPostMessageW.Call(uintptr(p.hwnd), wmUpdateHotkey, uintptr(mod), uintptr(key))
+	return nil
 }
 
 func (p *windowsPlatform) ReadClipboard() (*RawClip, error) {

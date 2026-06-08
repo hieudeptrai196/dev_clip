@@ -36,12 +36,16 @@ type HotkeySpec struct {
 type PlatformEvents interface {
 	OnClipboardChange()
 	OnHotkey(id int)
+	OnShowSettings()  // tray "Settings" clicked
+	OnQuitRequested() // tray "Quit" clicked
 }
 
 // EventsFunc is a func-based adapter implementing PlatformEvents.
 type EventsFunc struct {
 	ClipboardChange func()
 	Hotkey          func(id int)
+	ShowSettings    func()
+	QuitRequested   func()
 }
 
 func (e EventsFunc) OnClipboardChange() {
@@ -52,6 +56,16 @@ func (e EventsFunc) OnClipboardChange() {
 func (e EventsFunc) OnHotkey(id int) {
 	if e.Hotkey != nil {
 		e.Hotkey(id)
+	}
+}
+func (e EventsFunc) OnShowSettings() {
+	if e.ShowSettings != nil {
+		e.ShowSettings()
+	}
+}
+func (e EventsFunc) OnQuitRequested() {
+	if e.QuitRequested != nil {
+		e.QuitRequested()
 	}
 }
 
@@ -66,4 +80,5 @@ type Platform interface {
 	SimulatePaste(target WindowRef) error
 	CursorPos() (x, y int)
 	RegisterHotkey(spec HotkeySpec) error
+	UpdateHotkey(mod, key uint) error // re-register the paste hotkey with new combo
 }
