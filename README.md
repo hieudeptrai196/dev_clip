@@ -68,11 +68,11 @@ English · [Tiếng Việt](README.vi.md)
 > Windows 10/11, 64‑bit.
 
 **Option 1 — Installer (recommended)**
-1. Download **`DevClip-amd64-installer.exe`** from [Google Drive](https://drive.google.com/file/d/1Bai7aqQkF1YIXULKCjN6GmsbzsKEmvyF/view?usp=sharing).
+1. Download **`DevClip-amd64-installer.exe`** from [Google Drive](https://drive.google.com/file/d/1sjutFfZesOxkNCqL9t3olw5J80enEV1h/view?usp=sharing).
 2. Run it and follow the steps. It installs DevClip and adds a Start‑menu shortcut.
 
 **Option 2 — Portable**
-- Download **`DevClip.exe`** from [Google Drive](https://drive.google.com/file/d/1Bai7aqQkF1YIXULKCjN6GmsbzsKEmvyF/view?usp=sharing) and run it directly — no install needed.
+- Download **`DevClip.exe`** from [Google Drive](https://drive.google.com/file/d/1-v_gISTK4fH9cEbBL1x_nczpcadOvSx8/view?usp=sharing) and run it directly — no install needed.
 
 > ℹ️ The app isn’t code‑signed yet, so Windows SmartScreen may warn on first launch. Click **More info → Run anyway**.
 
