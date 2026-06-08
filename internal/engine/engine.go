@@ -163,6 +163,15 @@ func (e *Engine) PasteItem(id uint64) error {
 func (e *Engine) History() []*clip.ClipItem { return e.cfg.Store.List() }
 func (e *Engine) Clear()                    { e.cfg.Store.Clear() }
 
+// ItemImagePNG returns the PNG bytes of an image item, or nil if not an image.
+func (e *Engine) ItemImagePNG(id uint64) []byte {
+	it := e.cfg.Store.Get(id)
+	if it == nil {
+		return nil
+	}
+	return it.Image
+}
+
 func preview(s string) string {
 	const max = 120
 	if len(s) > max {

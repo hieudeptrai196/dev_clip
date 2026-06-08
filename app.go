@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -70,6 +71,17 @@ func (a *App) CursorPos() []int {
 
 // Clear empties the history (bound to JS).
 func (a *App) Clear() { a.eng.Clear() }
+
+// Thumbnail returns a base64 PNG data URL for an image item (bound to JS),
+// or an empty string if the item is not an image. Loaded lazily by the UI so
+// History() stays small.
+func (a *App) Thumbnail(id uint64) string {
+	png := a.eng.ItemImagePNG(id)
+	if len(png) == 0 {
+		return ""
+	}
+	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(png)
+}
 
 // Hide hides the popup window (bound to JS).
 func (a *App) Hide() { runtime.WindowHide(a.ctx) }

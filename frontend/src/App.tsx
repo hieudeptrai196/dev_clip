@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { History, PasteItem, Hide } from "../wailsjs/go/main/App";
+import { History, PasteItem, Hide, Thumbnail } from "../wailsjs/go/main/App";
 import { EventsOn } from "../wailsjs/runtime/runtime";
 import type { ClipItem } from "./types";
 import "./App.css";
@@ -8,6 +8,7 @@ function App() {
   const [items, setItems] = useState<ClipItem[]>([]);
   const [query, setQuery] = useState("");
   const [sel, setSel] = useState(0);
+  const [thumbs, setThumbs] = useState<Record<number, string>>({});
   const searchRef = useRef<HTMLInputElement>(null);
   const itemRefs = useRef<(HTMLLIElement | null)[]>([]);
   // Suppress the blur-to-hide for a short grace period right after the popup is
@@ -51,6 +52,17 @@ function App() {
     window.addEventListener("blur", onBlur);
     return () => window.removeEventListener("blur", onBlur);
   }, []);
+
+  // Lazily fetch a small base64 thumbnail for each image item once.
+  useEffect(() => {
+    items.forEach((it) => {
+      if (it.kind === 1 && thumbs[it.id] === undefined) {
+        Thumbnail(it.id).then((url) =>
+          setThumbs((prev) => ({ ...prev, [it.id]: url }))
+        );
+      }
+    });
+  }, [items, thumbs]);
 
   const filtered = items.filter((it) =>
     it.preview.toLowerCase().includes(query.toLowerCase())
@@ -117,7 +129,12 @@ function App() {
           >
             {it.kind === 1 ? (
               <span className="image-label">
-                <span className="image-icon">&#9638;</span> Image
+                {thumbs[it.id] ? (
+                  <img className="thumb" src={thumbs[it.id]} alt="clipboard image" />
+                ) : (
+                  <span className="image-icon">&#9638;</span>
+                )}
+                <span className="image-text">Image</span>
               </span>
             ) : (
               <span className="item-text">{it.preview}</span>
