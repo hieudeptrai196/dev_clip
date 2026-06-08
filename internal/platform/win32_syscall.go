@@ -63,6 +63,7 @@ const (
 	keyEventKeyUp = 0x0002
 	vkControl     = 0x11
 	vkV           = 0x56
+	vkOEM3        = 0xC0 // the `~ key (backtick / grave), left of the 1 key
 
 	processQueryLimitedInformation = 0x1000
 )
