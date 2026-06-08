@@ -3,6 +3,10 @@ package main
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -11,15 +15,35 @@ import (
 	"devclip/internal/engine"
 	"devclip/internal/platform"
 	"devclip/internal/security"
+	"devclip/internal/snippet"
 )
 
 // App is the Wails-bound application surface.
 type App struct {
-	ctx context.Context
-	eng *engine.Engine
+	ctx      context.Context
+	eng      *engine.Engine
+	snippets []snippet.Snippet
 }
 
 func NewApp() *App { return &App{} }
+
+// snippetConfigPath returns <UserConfigDir>/DevClip/config.json,
+// falling back to "./config.json" on error.
+func snippetConfigPath() string {
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		dir = "."
+	}
+	return filepath.Join(dir, "DevClip", "config.json")
+}
+
+// sampleConfig is written on first run so the user has a template to edit.
+var sampleConfig = map[string]interface{}{
+	"snippets": []map[string]string{
+		{"name": "Console log", "content": "console.log('{{label}}:', {{value}});"},
+		{"name": "MIT header", "content": "// Copyright (c) {{year}} {{author}}. MIT License."},
+	},
+}
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
@@ -40,6 +64,21 @@ func (a *App) startup(ctx context.Context) {
 	})
 	if err := a.eng.Start(); err != nil {
 		runtime.LogError(a.ctx, "engine start failed: "+err.Error())
+	}
+
+	// Load snippets from config file, creating sample if missing.
+	cfgPath := snippetConfigPath()
+	if _, err := os.Stat(cfgPath); os.IsNotExist(err) {
+		if mkErr := os.MkdirAll(filepath.Dir(cfgPath), 0755); mkErr == nil {
+			if data, jsonErr := json.MarshalIndent(sampleConfig, "", "  "); jsonErr == nil {
+				_ = os.WriteFile(cfgPath, data, 0644)
+			}
+		}
+	}
+	var loadErr error
+	a.snippets, loadErr = snippet.Load(cfgPath)
+	if loadErr != nil {
+		runtime.LogError(a.ctx, "snippet load failed: "+loadErr.Error())
 	}
 
 	// Warm up WebView2 so the FIRST Alt+V is not a cold start. Without this, the
@@ -98,3 +137,26 @@ func (a *App) PasteFormatted(id uint64) error { return a.eng.PasteFormatted(id) 
 
 // Hide hides the popup window (bound to JS).
 func (a *App) Hide() { runtime.WindowHide(a.ctx) }
+
+// Snippets returns the loaded snippet list (bound to JS).
+func (a *App) Snippets() []snippet.Snippet { return a.snippets }
+
+// SnippetPlaceholders returns the placeholder names for the given snippet (bound to JS).
+func (a *App) SnippetPlaceholders(id uint64) []string {
+	for _, s := range a.snippets {
+		if s.ID == id {
+			return snippet.Placeholders(s.Content)
+		}
+	}
+	return nil
+}
+
+// PasteSnippet renders a snippet with the given values and pastes it (bound to JS).
+func (a *App) PasteSnippet(id uint64, values map[string]string) error {
+	for _, s := range a.snippets {
+		if s.ID == id {
+			return a.eng.PasteText(snippet.Render(s.Content, values))
+		}
+	}
+	return fmt.Errorf("snippet %d not found", id)
+}

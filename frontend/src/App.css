@@ -280,3 +280,137 @@
 .hint-sep {
   opacity: 0.50;
 }
+
+/* ── Tab switcher ── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 2px 8px;
+  flex-shrink: 0;
+}
+
+.tab {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 0;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  outline: none;
+}
+
+.tab:hover {
+  background: rgba(255, 255, 255, 0.10);
+  color: rgba(255, 255, 255, 0.80);
+}
+
+.tab--active {
+  background: rgba(0, 120, 212, 0.28);
+  border-color: #0078d4;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.tab--active:hover {
+  background: rgba(0, 120, 212, 0.36);
+}
+
+/* ── Placeholder form ── */
+.ph-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 2px;
+  overflow-y: auto;
+}
+
+.ph-form-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ph-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ph-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.ph-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.92);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 6px 10px;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.ph-input::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+  font-style: italic;
+}
+
+.ph-input:focus {
+  border-color: rgba(0, 120, 212, 0.70);
+  background: rgba(255, 255, 255, 0.11);
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.25);
+}
+
+.ph-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.ph-btn {
+  flex: 1;
+  border-radius: 6px;
+  border: 1px solid;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 0;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  outline: none;
+}
+
+.ph-btn--paste {
+  background: rgba(0, 120, 212, 0.28);
+  border-color: #0078d4;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.ph-btn--paste:hover {
+  background: rgba(0, 120, 212, 0.42);
+}
+
+.ph-btn--cancel {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.60);
+}
+
+.ph-btn--cancel:hover {
+  background: rgba(255, 255, 255, 0.10);
+  color: rgba(255, 255, 255, 0.85);
+}

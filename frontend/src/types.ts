@@ -7,3 +7,9 @@ export interface ClipItem {
   pinned: boolean;
   format: string; // "plain" | "json" | "sql"
 }
+
+export interface Snippet {
+  id: number;
+  name: string;
+  content: string;
+}

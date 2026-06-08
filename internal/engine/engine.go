@@ -169,6 +169,9 @@ func (e *Engine) PasteItem(id uint64) error {
 	return nil
 }
 
+// PasteText pastes an arbitrary string into the captured target window.
+func (e *Engine) PasteText(text string) error { return e.pasteText(text) }
+
 // pasteText writes text to the clipboard, simulates paste, then restores the
 // previous clipboard contents after RestoreDelay.
 func (e *Engine) pasteText(text string) error {
