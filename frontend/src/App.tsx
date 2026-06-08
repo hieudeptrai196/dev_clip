@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { History, PasteItem, Hide, Thumbnail, FormatItem, PasteTransformed, PasteFormatted, Snippets, SnippetPlaceholders, PasteSnippet, GetSettings, SaveSettings } from "../wailsjs/go/main/App";
+import { History, PasteItem, Hide, Thumbnail, FormatItem, PasteTransformed, PasteFormatted, Snippets, SnippetPlaceholders, PasteSnippet, GetSettings, SaveSettings, TogglePin, ReorderPins } from "../wailsjs/go/main/App";
 import { EventsOn } from "../wailsjs/runtime/runtime";
 import type { ClipItem, AppSettings } from "./types";
 import { snippet } from "../wailsjs/go/models";
@@ -82,6 +82,8 @@ function App() {
   const [thumbs, setThumbs] = useState<Record<number, string>>({});
   const searchRef = useRef<HTMLInputElement>(null);
   const itemRefs = useRef<(HTMLLIElement | null)[]>([]);
+  // Drag-to-reorder state for pinned items (holds the id being dragged).
+  const [dragId, setDragId] = useState<number | null>(null);
 
   // ── Snippets tab state ──
   const [snippetList, setSnippetList] = useState<snippet.Snippet[]>([]);
@@ -241,6 +243,41 @@ function App() {
     await Hide();
     setQuery("");
     setSel(0);
+  };
+
+  // ── Pin + drag-to-reorder logic ──
+  const doTogglePin = async (item: ClipItem) => {
+    await TogglePin(item.id);
+    await refresh();
+  };
+
+  const onDragStart = (item: ClipItem) => {
+    if (item.pinned) setDragId(item.id);
+  };
+
+  const onDragOverItem = (e: React.DragEvent, item: ClipItem) => {
+    // Only pinned rows are valid drop targets while a pinned drag is active.
+    if (dragId !== null && item.pinned) e.preventDefault();
+  };
+
+  const onDropItem = async (e: React.DragEvent, target: ClipItem) => {
+    e.preventDefault();
+    if (dragId === null || !target.pinned || target.id === dragId) {
+      setDragId(null);
+      return;
+    }
+    const pinnedIds = items.filter((i) => i.pinned).map((i) => i.id);
+    const from = pinnedIds.indexOf(dragId);
+    const to = pinnedIds.indexOf(target.id);
+    if (from === -1 || to === -1) {
+      setDragId(null);
+      return;
+    }
+    pinnedIds.splice(from, 1);
+    pinnedIds.splice(to, 0, dragId);
+    setDragId(null);
+    await ReorderPins(pinnedIds);
+    await refresh();
   };
 
   // ── Snippets tab logic ──
@@ -443,7 +480,12 @@ function App() {
                 <li
                   key={it.id}
                   ref={(el) => { itemRefs.current[i] = el; }}
-                  className={`clip-item${isSelected ? " selected" : ""}`}
+                  className={`clip-item${isSelected ? " selected" : ""}${it.pinned ? " pinned" : ""}${dragId === it.id ? " dragging" : ""}`}
+                  draggable={it.pinned}
+                  onDragStart={() => onDragStart(it)}
+                  onDragOver={(e) => onDragOverItem(e, it)}
+                  onDrop={(e) => onDropItem(e, it)}
+                  onDragEnd={() => setDragId(null)}
                   onClick={() => doPaste(it)}
                   onMouseEnter={() => setSel(i)}
                 >
@@ -465,6 +507,14 @@ function App() {
                         {it.format.toUpperCase()}
                       </span>
                     )}
+                    <button
+                      className={`pin-btn${it.pinned ? " pinned" : ""}`}
+                      title={it.pinned ? "Bỏ ghim" : "Ghim lên đầu"}
+                      aria-label={it.pinned ? "Unpin" : "Pin"}
+                      onClick={(e) => { e.stopPropagation(); doTogglePin(it); }}
+                    >
+                      &#128204;
+                    </button>
                   </div>
                   {isSelected && isText && (
                     <div

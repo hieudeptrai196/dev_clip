@@ -30,6 +30,8 @@ export function PasteTransformed(arg1:number,arg2:string):Promise<void>;
 
 export function RemoveFromBlocklist(arg1:string):Promise<void>;
 
+export function ReorderPins(arg1:Array<number>):Promise<void>;
+
 export function SaveSettings(arg1:settings.Settings):Promise<void>;
 
 export function SnippetPlaceholders(arg1:number):Promise<Array<string>>;
@@ -39,3 +41,5 @@ export function Snippets():Promise<Array<snippet.Snippet>>;
 export function TestHotkey(arg1:number,arg2:number):Promise<boolean>;
 
 export function Thumbnail(arg1:number):Promise<string>;
+
+export function TogglePin(arg1:number):Promise<void>;

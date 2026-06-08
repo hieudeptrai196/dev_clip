@@ -125,6 +125,14 @@ func (a *App) CursorPos() []int {
 // Clear empties the history (bound to JS).
 func (a *App) Clear() { a.eng.Clear() }
 
+// TogglePin pins or unpins the item with the given id (bound to JS). Pinned
+// items sort to the top and are not evicted by the history capacity.
+func (a *App) TogglePin(id uint64) { a.eng.TogglePin(id) }
+
+// ReorderPins sets the display order of pinned items to the given id sequence
+// (bound to JS). Used by drag-and-drop reordering in the UI.
+func (a *App) ReorderPins(ids []uint64) { a.eng.ReorderPins(ids) }
+
 // Thumbnail returns a base64 PNG data URL for an image item (bound to JS),
 // or an empty string if the item is not an image. Loaded lazily by the UI so
 // History() stays small.
