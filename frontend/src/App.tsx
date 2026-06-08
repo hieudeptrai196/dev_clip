@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { History, PasteItem, Hide, Thumbnail, FormatItem, PasteTransformed, PasteFormatted, Snippets, SnippetPlaceholders, PasteSnippet, GetSettings, SaveSettings, TogglePin, ReorderPins } from "../wailsjs/go/main/App";
-import { EventsOn } from "../wailsjs/runtime/runtime";
+import { History, PasteItem, Hide, Thumbnail, FormatItem, PasteTransformed, PasteFormatted, Snippets, SnippetPlaceholders, PasteSnippet, GetSettings, SaveSettings, TogglePin, ReorderPins, DeleteItem, ClearAll } from "../wailsjs/go/main/App";
+import { EventsOn, WindowFullscreen, WindowUnfullscreen } from "../wailsjs/runtime/runtime";
 import type { ClipItem, AppSettings } from "./types";
 import { snippet } from "../wailsjs/go/models";
+import { Icon } from "./Icon";
 import "./App.css";
 
 const MODIFIERS = [
@@ -84,6 +85,11 @@ function App() {
   const itemRefs = useRef<(HTMLLIElement | null)[]>([]);
   // Drag-to-reorder state for pinned items (holds the id being dragged).
   const [dragId, setDragId] = useState<number | null>(null);
+  // Item whose full content is shown in the large preview popup (null = closed).
+  const [previewItem, setPreviewItem] = useState<ClipItem | null>(null);
+  // True while the preview has put the window into fullscreen (so we know to
+  // restore it). A ref so the blur handler reads the live value.
+  const fullscreenRef = useRef(false);
 
   // ── Snippets tab state ──
   const [snippetList, setSnippetList] = useState<snippet.Snippet[]>([]);
@@ -101,8 +107,10 @@ function App() {
   const [hotkeyKey, setHotkeyKey] = useState<number>(0x56);
   const [maxItems, setMaxItems] = useState<number>(100);
   const [autoStart, setAutoStart] = useState<boolean>(false);
-  const [settingsError, setSettingsError] = useState<string>("");
-  const [settingsSuccess, setSettingsSuccess] = useState<string>("");
+  // Unified save status. Rendered in a fixed-height bar so it never shifts
+  // layout (the old appear/disappear alerts caused a one-frame flicker).
+  const [saveStatus, setSaveStatus] = useState<{ kind: "idle" | "saving" | "success" | "error"; msg: string }>({ kind: "idle", msg: "" });
+  const statusTimer = useRef<number>(0);
 
   // Suppress the blur-to-hide for a short grace period right after the popup is
   // shown, otherwise the window fires a transient `blur` during the show
@@ -123,10 +131,27 @@ function App() {
         setHotkeyKey(s.hotkey_key);
         setMaxItems(s.max_items);
         setAutoStart(s.auto_start);
-        setSettingsError("");
+        setSaveStatus({ kind: "idle", msg: "" });
       }
     } catch (err: any) {
-      setSettingsError("Failed to load settings: " + (err.message || err));
+      setSaveStatus({ kind: "error", msg: "Failed to load settings: " + (err.message || err) });
+    }
+  }, []);
+
+  // Persist a settings change with smooth loading -> saved feedback (no flicker).
+  const runSave = useCallback(async (updated: AppSettings, successMsg: string) => {
+    window.clearTimeout(statusTimer.current);
+    setSaveStatus({ kind: "saving", msg: "Saving…" });
+    try {
+      await SaveSettings(updated);
+      setSettings(updated);
+      setSaveStatus({ kind: "success", msg: successMsg });
+      statusTimer.current = window.setTimeout(
+        () => setSaveStatus({ kind: "idle", msg: "" }),
+        1800
+      );
+    } catch (err: any) {
+      setSaveStatus({ kind: "error", msg: err.message || String(err) });
     }
   }, []);
 
@@ -188,7 +213,16 @@ function App() {
       // only close on a genuine click-away, not a focus bounce.
       window.setTimeout(() => {
         if (Date.now() < ignoreBlurUntil.current) return;
-        if (!document.hasFocus()) Hide();
+        if (!document.hasFocus()) {
+          // If the preview put us in fullscreen, exit it before hiding so the
+          // next Alt+V opens the normal small popup.
+          if (fullscreenRef.current) {
+            WindowUnfullscreen();
+            fullscreenRef.current = false;
+            setPreviewItem(null);
+          }
+          Hide();
+        }
       }, 120);
     };
     window.addEventListener("blur", onBlur);
@@ -312,64 +346,70 @@ function App() {
 
   const handleApplyHotkey = async () => {
     if (!settings) return;
-    setSettingsError("");
-    setSettingsSuccess("");
     const label = getHotkeyLabel(hotkeyMod, hotkeyKey);
-    const updatedSettings = {
-      ...settings,
-      hotkey_mod: hotkeyMod,
-      hotkey_key: hotkeyKey,
-      hotkey_label: label,
-    };
-    try {
-      await SaveSettings(updatedSettings);
-      setSettings(updatedSettings);
-      setSettingsSuccess(`Hotkey updated to ${label}!`);
-    } catch (err: any) {
-      setSettingsError(err.message || String(err));
-    }
+    await runSave(
+      { ...settings, hotkey_mod: hotkeyMod, hotkey_key: hotkeyKey, hotkey_label: label },
+      `Hotkey set to ${label}`
+    );
   };
 
   const handleToggleAutoStart = async (val: boolean) => {
     if (!settings) return;
-    setSettingsError("");
-    setSettingsSuccess("");
-    const updatedSettings = {
-      ...settings,
-      auto_start: val,
-    };
-    try {
-      await SaveSettings(updatedSettings);
-      setSettings(updatedSettings);
-      setAutoStart(val);
-      setSettingsSuccess(`Auto-start ${val ? "enabled" : "disabled"}`);
-    } catch (err: any) {
-      setSettingsError(err.message || String(err));
-    }
+    setAutoStart(val);
+    await runSave({ ...settings, auto_start: val }, `Auto-start ${val ? "enabled" : "disabled"}`);
   };
 
   const handleCapacityChange = async (val: number) => {
     if (!settings) return;
-    setSettingsError("");
-    setSettingsSuccess("");
-    const updatedSettings = {
-      ...settings,
-      max_items: val,
-    };
-    try {
-      await SaveSettings(updatedSettings);
-      setSettings(updatedSettings);
-      setMaxItems(val);
-      setSettingsSuccess("Capacity updated! Takes effect on restart.");
-    } catch (err: any) {
-      setSettingsError(err.message || String(err));
+    setMaxItems(val);
+    await runSave({ ...settings, max_items: val }, "Capacity saved (applies on restart)");
+  };
+
+  // ── Preview popup: go fullscreen while viewing, restore on close. Wails'
+  // WindowUnfullscreen restores the exact previous size/position, so this is
+  // immune to the off-screen/DPI issues of manual resize+center. ──
+  const openPreview = async (item: ClipItem) => {
+    // Ensure the full-size image is available before showing the popup.
+    if (item.kind === 1 && thumbs[item.id] === undefined) {
+      const url = await Thumbnail(item.id);
+      setThumbs((prev) => ({ ...prev, [item.id]: url }));
     }
+    WindowFullscreen();
+    fullscreenRef.current = true;
+    setPreviewItem(item);
+  };
+
+  const closePreview = () => {
+    if (fullscreenRef.current) {
+      WindowUnfullscreen();
+      fullscreenRef.current = false;
+    }
+    setPreviewItem(null);
+  };
+
+  // ── Delete / clear-all ──
+  const doDelete = async (item: ClipItem) => {
+    if (previewItem && previewItem.id === item.id) closePreview();
+    await DeleteItem(item.id);
+    await refresh();
+  };
+
+  const doClearAll = async () => {
+    closePreview();
+    await ClearAll();
+    setSel(0);
+    await refresh();
   };
 
 
 
   // ── Keyboard handler ──
   const onKeyDown = async (e: React.KeyboardEvent) => {
+    // While the preview popup is open, Escape just closes it.
+    if (previewItem) {
+      if (e.key === "Escape") { e.preventDefault(); closePreview(); }
+      return;
+    }
     if (tab === "recent") {
       if (e.key === "ArrowDown") {
         e.preventDefault();
@@ -428,11 +468,13 @@ function App() {
         title="Settings"
         aria-label="Settings"
       >
-        ⚙
+        <Icon name="settings" size={16} />
       </button>
 
       {/* Close button in top-right corner */}
-      <button className="close-btn" onClick={() => Hide()} aria-label="Close">&#xd7;</button>
+      <button className="close-btn" onClick={() => Hide()} aria-label="Close">
+        <Icon name="close" size={16} />
+      </button>
 
       {/* Tab switcher */}
       <div className="tabs">
@@ -466,6 +508,15 @@ function App() {
                 setSel(0);
               }}
             />
+            {items.length > 0 && (
+              <button
+                className="clear-all-btn"
+                title="Xoá toàn bộ lịch sử"
+                onClick={(e) => { e.stopPropagation(); doClearAll(); }}
+              >
+                Clear all
+              </button>
+            )}
           </div>
 
           <ul className="clip-list">
@@ -476,6 +527,9 @@ function App() {
               const isSelected = i === clampedSel;
               const isText = it.kind === 0;
               const hasFmt = isText && (it.format === "json" || it.format === "sql");
+              const isImage = it.kind === 1;
+              // Show a Preview button for images and for text that was truncated.
+              const canPreview = isImage || (isText && it.text.length > it.preview.length);
               return (
                 <li
                   key={it.id}
@@ -490,31 +544,58 @@ function App() {
                   onMouseEnter={() => setSel(i)}
                 >
                   <div className="item-row">
-                    {it.kind === 1 ? (
-                      <span className="image-label">
-                        {thumbs[it.id] ? (
-                          <img className="thumb" src={thumbs[it.id]} alt="clipboard image" />
-                        ) : (
-                          <span className="image-icon">&#9638;</span>
-                        )}
-                        <span className="image-text">Image</span>
-                      </span>
-                    ) : (
-                      <span className="item-text">{it.preview}</span>
-                    )}
-                    {hasFmt && (
-                      <span className={`fmt-badge fmt-badge--${it.format}`}>
-                        {it.format.toUpperCase()}
-                      </span>
-                    )}
-                    <button
-                      className={`pin-btn${it.pinned ? " pinned" : ""}`}
-                      title={it.pinned ? "Bỏ ghim" : "Ghim lên đầu"}
-                      aria-label={it.pinned ? "Unpin" : "Pin"}
-                      onClick={(e) => { e.stopPropagation(); doTogglePin(it); }}
-                    >
-                      &#128204;
-                    </button>
+                    <div className="item-main">
+                      {isImage ? (
+                        <span className="image-label">
+                          {thumbs[it.id] ? (
+                            <img className="thumb" src={thumbs[it.id]} alt="clipboard image" />
+                          ) : (
+                            <span className="image-icon"><Icon name="image" size={20} /></span>
+                          )}
+                        </span>
+                      ) : (
+                        <span className="item-text">{it.preview}</span>
+                      )}
+                    </div>
+
+                    {/* Function buttons — revealed only on hover/selection */}
+                    <div className="item-actions" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        className={`pin-btn${it.pinned ? " pinned" : ""}`}
+                        title={it.pinned ? "Bỏ ghim" : "Ghim lên đầu"}
+                        aria-label={it.pinned ? "Unpin" : "Pin"}
+                        onClick={(e) => { e.stopPropagation(); doTogglePin(it); }}
+                      >
+                        <Icon name="pin" size={14} />
+                      </button>
+                      <button
+                        className="del-btn"
+                        title="Xoá mục này"
+                        aria-label="Delete"
+                        onClick={(e) => { e.stopPropagation(); doDelete(it); }}
+                      >
+                        <Icon name="trash" size={14} />
+                      </button>
+                    </div>
+
+                    {/* Labels (format badge, Preview) — always pinned hard right */}
+                    <div className="item-labels">
+                      {hasFmt && (
+                        <span className={`fmt-badge fmt-badge--${it.format}`}>
+                          {it.format.toUpperCase()}
+                        </span>
+                      )}
+                      {canPreview && (
+                        <button
+                          className="preview-btn"
+                          title="Xem nội dung đầy đủ"
+                          aria-label="Preview"
+                          onClick={(e) => { e.stopPropagation(); openPreview(it); }}
+                        >
+                          <Icon name="eye" size={15} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   {isSelected && isText && (
                     <div
@@ -598,13 +679,17 @@ function App() {
 
       {tab === "settings" && (
         <div className="settings-panel">
-          {settingsError && <div className="settings-alert settings-alert--error">{settingsError}</div>}
-          {settingsSuccess && <div className="settings-alert settings-alert--success">{settingsSuccess}</div>}
+          <div className={`settings-status settings-status--${saveStatus.kind}`}>
+            {saveStatus.kind === "saving" && <span className="status-spinner" />}
+            {saveStatus.kind === "success" && <span className="status-icon"><Icon name="check" size={14} /></span>}
+            {saveStatus.kind === "error" && <span className="status-icon"><Icon name="alert" size={14} /></span>}
+            <span className="status-msg">{saveStatus.msg}</span>
+          </div>
 
           <div className="settings-scroll">
             {/* Section 1: Hotkey Picker */}
             <div className="settings-section">
-              <div className="settings-section-title">⌨ Hotkey</div>
+              <div className="settings-section-title"><Icon name="hotkey" size={14} /> Hotkey</div>
               <div className="settings-row">
                 <select
                   className="settings-select"
@@ -637,7 +722,7 @@ function App() {
 
             {/* Section 2: Capacity */}
             <div className="settings-section">
-              <div className="settings-section-title">📋 History Capacity</div>
+              <div className="settings-section-title"><Icon name="capacity" size={14} /> History Capacity</div>
               <div className="capacity-control">
                 <input
                   type="number"
@@ -672,7 +757,7 @@ function App() {
 
             {/* Section 3: Auto-Start */}
             <div className="settings-section">
-              <div className="settings-section-title">🚀 Startup</div>
+              <div className="settings-section-title"><Icon name="startup" size={14} /> Startup</div>
               <label className="toggle-label">
                 <input
                   type="checkbox"
@@ -689,6 +774,29 @@ function App() {
               <div className="about-title">DevClip v1.0</div>
               <div className="about-desc">Alt+V clipboard manager for developers.</div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {previewItem && (
+        <div className="preview-overlay" onClick={closePreview}>
+          <div className="preview-card" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="preview-close"
+              onClick={closePreview}
+              aria-label="Close preview"
+            >
+              <Icon name="close" size={16} />
+            </button>
+            {previewItem.kind === 1 ? (
+              thumbs[previewItem.id] ? (
+                <img className="preview-image" src={thumbs[previewItem.id]} alt="preview" />
+              ) : (
+                <div className="preview-loading">Loading…</div>
+              )
+            ) : (
+              <pre className="preview-text">{previewItem.text}</pre>
+            )}
           </div>
         </div>
       )}

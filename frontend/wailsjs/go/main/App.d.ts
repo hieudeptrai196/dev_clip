@@ -8,7 +8,11 @@ export function AddToBlocklist(arg1:string):Promise<void>;
 
 export function Clear():Promise<void>;
 
+export function ClearAll():Promise<void>;
+
 export function CursorPos():Promise<Array<number>>;
+
+export function DeleteItem(arg1:number):Promise<void>;
 
 export function FormatItem(arg1:number):Promise<string>;
 

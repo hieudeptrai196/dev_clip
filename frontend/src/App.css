@@ -98,10 +98,14 @@
 .search-wrap {
   padding: 0 2px 8px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .search-input {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   box-sizing: border-box;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.10);
@@ -109,10 +113,33 @@
   color: rgba(255, 255, 255, 0.92);
   font-family: inherit;
   font-size: 13px;
-  padding: 7px 38px 7px 10px;
+  padding: 7px 12px;
   outline: none;
   transition: border-color 0.15s, background 0.15s;
   cursor: text;
+}
+
+/* ── Clear all button ── */
+.clear-all-btn {
+  flex-shrink: 0;
+  background: rgba(239, 68, 68, 0.14);
+  border: 1px solid rgba(239, 68, 68, 0.30);
+  border-radius: 6px;
+  color: rgba(252, 165, 165, 0.95);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  padding: 6px 9px;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  outline: none;
+}
+
+.clear-all-btn:hover {
+  background: rgba(239, 68, 68, 0.26);
+  border-color: rgba(239, 68, 68, 0.50);
+  color: #fff;
 }
 
 .search-input::placeholder {
@@ -198,7 +225,8 @@
 }
 
 .image-icon {
-  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
   color: rgba(0, 120, 212, 0.85);
 }
 
@@ -216,16 +244,43 @@
   color: rgba(255, 255, 255, 0.55);
 }
 
-/* ── Item row (text + badge on same line) ── */
+/* ── Item row (content | hover actions | right-aligned labels) ── */
 .item-row {
   display: flex;
   align-items: flex-start;
   gap: 6px;
 }
 
-.item-row .item-text {
+.item-main {
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: flex-start;
+}
+
+.item-main .item-text {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Function buttons (pin / delete): hidden until row is hovered or selected */
+.item-actions {
+  display: none;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.clip-item:hover .item-actions {
+  display: inline-flex;
+}
+
+/* Labels (format badge + Preview): always visible, pinned hard right */
+.item-labels {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 /* ── Format badge ── */
@@ -304,32 +359,25 @@
 /* ── Pin button ── */
 .pin-btn {
   flex-shrink: 0;
-  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: transparent;
   border: none;
   cursor: pointer;
-  font-size: 13px;
-  line-height: 1.4;
-  padding: 0 2px;
-  opacity: 0; /* hidden until hover/selected */
-  filter: grayscale(1);
-  transition: opacity 0.12s, filter 0.12s, transform 0.10s;
+  padding: 2px;
+  color: rgba(255, 255, 255, 0.65);
+  transition: color 0.12s, transform 0.10s;
   outline: none;
 }
 
-.clip-item:hover .pin-btn,
-.clip-item.selected .pin-btn {
-  opacity: 0.55;
-}
-
 .pin-btn:hover {
-  opacity: 1 !important;
+  color: #4aa3ff;
   transform: scale(1.18);
 }
 
 .pin-btn.pinned {
-  opacity: 1; /* pinned items always show the marker */
-  filter: none;
+  color: #4aa3ff; /* pinned marker stays blue when revealed */
 }
 
 /* ── Pinned item card ── */
@@ -344,6 +392,149 @@
 
 .clip-item.dragging {
   opacity: 0.40;
+}
+
+/* ── Per-item action cluster (preview / pin / delete) ── */
+.item-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+/* Preview (eye) icon button — always visible, hard right */
+.preview-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  color: rgba(255, 255, 255, 0.55);
+  transition: color 0.12s, transform 0.10s;
+  outline: none;
+}
+
+.preview-btn:hover {
+  color: #4aa3ff;
+  transform: scale(1.15);
+}
+
+/* Delete button */
+.del-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  color: rgba(255, 255, 255, 0.65);
+  transition: color 0.12s, transform 0.10s;
+  outline: none;
+}
+
+.del-btn:hover {
+  color: #fca5a5;
+  transform: scale(1.15);
+}
+
+/* ── Large preview overlay ── */
+.preview-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  border-radius: 10px;
+  animation: preview-fade 0.12s ease-out;
+}
+
+@keyframes preview-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.preview-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: rgba(28, 28, 28, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  padding: 38px 14px 14px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.preview-close {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  border-radius: 5px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.12s, color 0.12s;
+  outline: none;
+}
+
+.preview-close:hover {
+  background: rgba(239, 68, 68, 0.40);
+  color: #fff;
+}
+
+.preview-image {
+  margin: auto; /* center within the flex column */
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.preview-text {
+  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+/* Bigger, easier-to-hit close button in the enlarged popup */
+.preview-close {
+  width: 30px;
+  height: 30px;
+}
+
+.preview-loading {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 13px;
+  padding: 20px;
 }
 
 /* ── Empty state ── */
@@ -558,6 +749,9 @@
 }
 
 .settings-section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
@@ -675,6 +869,45 @@
   color: #86efac;
 }
 
+/* ── Settings save status (fixed height -> no layout shift / flicker) ── */
+.settings-status {
+  flex-shrink: 0;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 2px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.settings-status--saving,
+.settings-status--success,
+.settings-status--error {
+  opacity: 1;
+}
+
+.settings-status--saving { color: rgba(255, 255, 255, 0.65); }
+.settings-status--success { color: #86efac; }
+.settings-status--error { color: #fca5a5; }
+
+.status-icon { display: inline-flex; align-items: center; }
+
+.status-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  animation: status-spin 0.6s linear infinite;
+}
+
+@keyframes status-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Capacity Control */
 .capacity-control {
   display: flex;
@@ -762,8 +995,16 @@
 .close-btn,
 .settings-toggle-btn,
 .search-input,
+.clear-all-btn,
 .clip-item,
 .pin-btn,
+.del-btn,
+.preview-btn,
+.item-actions,
+.item-labels,
+.preview-overlay,
+.preview-card,
+.preview-close,
 .ph-input,
 .ph-btn,
 .settings-select,
