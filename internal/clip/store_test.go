@@ -60,6 +60,93 @@ func TestEvictedItemDataIsCleared(t *testing.T) {
 	assert.Nil(t, first.Image)
 }
 
+func TestPinMovesItemToTopAndSurvivesEviction(t *testing.T) {
+	s := NewStore(2)
+	s.Push(textItem("a"))
+	s.Push(textItem("b"))
+	aID := s.List()[1].ID // "a" is the oldest
+
+	s.TogglePin(aID)
+
+	// Pinned "a" must lead the list even though it was the oldest.
+	items := s.List()
+	require.Len(t, items, 2)
+	assert.Equal(t, "a", items[0].Text)
+	assert.True(t, items[0].Pinned)
+
+	// Overflow the cap: "a" must NOT be evicted because it is pinned.
+	s.Push(textItem("c"))
+	s.Push(textItem("d"))
+	items = s.List()
+	texts := []string{}
+	for _, it := range items {
+		texts = append(texts, it.Text)
+	}
+	assert.Contains(t, texts, "a", "pinned item must survive eviction")
+	assert.Equal(t, "a", items[0].Text, "pinned item stays on top")
+}
+
+func TestUnpinReturnsItemToHistory(t *testing.T) {
+	s := NewStore(5)
+	s.Push(textItem("a"))
+	id := s.List()[0].ID
+	s.TogglePin(id)
+	assert.True(t, s.List()[0].Pinned)
+
+	s.TogglePin(s.List()[0].ID)
+	got := s.List()[0]
+	assert.False(t, got.Pinned, "item is unpinned")
+	assert.Equal(t, "a", got.Text)
+}
+
+func TestReorderPinsAppliesGivenOrder(t *testing.T) {
+	s := NewStore(5)
+	for _, v := range []string{"a", "b", "c"} {
+		s.Push(textItem(v))
+	}
+	for _, it := range s.List() {
+		s.TogglePin(it.ID)
+	}
+	// All three pinned now; capture their IDs by text.
+	idOf := map[string]uint64{}
+	for _, it := range s.List() {
+		idOf[it.Text] = it.ID
+	}
+
+	s.ReorderPins([]uint64{idOf["b"], idOf["a"], idOf["c"]})
+
+	items := s.List()
+	require.Len(t, items, 3)
+	assert.Equal(t, []string{"b", "a", "c"},
+		[]string{items[0].Text, items[1].Text, items[2].Text})
+}
+
+func TestDuplicateOfPinnedItemKeepsItPinned(t *testing.T) {
+	s := NewStore(5)
+	s.Push(textItem("a"))
+	s.TogglePin(s.List()[0].ID)
+
+	s.Push(textItem("a")) // copy the same text again
+
+	items := s.List()
+	require.Len(t, items, 1, "no duplicate added")
+	assert.True(t, items[0].Pinned, "stays pinned")
+}
+
+func TestClearKeepsPinnedItems(t *testing.T) {
+	s := NewStore(5)
+	s.Push(textItem("keep"))
+	s.TogglePin(s.List()[0].ID)
+	s.Push(textItem("drop"))
+
+	s.Clear()
+
+	items := s.List()
+	require.Len(t, items, 1)
+	assert.Equal(t, "keep", items[0].Text)
+	assert.True(t, items[0].Pinned)
+}
+
 func TestConcurrentPushIsSafe(t *testing.T) {
 	s := NewStore(100)
 	done := make(chan struct{})

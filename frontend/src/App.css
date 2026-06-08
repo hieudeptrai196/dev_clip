@@ -301,6 +301,51 @@
   color: rgba(150, 210, 255, 1);
 }
 
+/* ── Pin button ── */
+.pin-btn {
+  flex-shrink: 0;
+  align-self: flex-start;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1.4;
+  padding: 0 2px;
+  opacity: 0; /* hidden until hover/selected */
+  filter: grayscale(1);
+  transition: opacity 0.12s, filter 0.12s, transform 0.10s;
+  outline: none;
+}
+
+.clip-item:hover .pin-btn,
+.clip-item.selected .pin-btn {
+  opacity: 0.55;
+}
+
+.pin-btn:hover {
+  opacity: 1 !important;
+  transform: scale(1.18);
+}
+
+.pin-btn.pinned {
+  opacity: 1; /* pinned items always show the marker */
+  filter: none;
+}
+
+/* ── Pinned item card ── */
+.clip-item.pinned {
+  border-color: rgba(0, 120, 212, 0.45);
+  background: rgba(0, 120, 212, 0.10);
+}
+
+.clip-item.pinned:hover {
+  cursor: move; /* hint that pinned cards can be dragged to reorder */
+}
+
+.clip-item.dragging {
+  opacity: 0.40;
+}
+
 /* ── Empty state ── */
 .empty-state {
   list-style: none;
@@ -718,6 +763,7 @@
 .settings-toggle-btn,
 .search-input,
 .clip-item,
+.pin-btn,
 .ph-input,
 .ph-btn,
 .settings-select,
