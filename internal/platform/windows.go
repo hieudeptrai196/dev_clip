@@ -239,7 +239,15 @@ func (p *windowsPlatform) SimulatePaste(target WindowRef) error {
 	return nil
 }
 
-func (p *windowsPlatform) CursorPos() (int, int) { return getCursorPos() }
+func (p *windowsPlatform) CursorPos() (int, int) {
+	x, y := getCursorPos() // physical pixels
+	scale := dpiScaleAtCursor(int32(x), int32(y))
+	if scale <= 0 {
+		scale = 1.0
+	}
+	// Convert to logical (DIP) coordinates for Wails WindowSetPosition.
+	return int(float64(x) / scale), int(float64(y) / scale)
+}
 
 func (p *windowsPlatform) RegisterHotkey(spec HotkeySpec) error {
 	if r, _, err := procRegisterHotKey.Call(

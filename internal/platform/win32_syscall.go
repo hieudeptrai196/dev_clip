@@ -11,6 +11,10 @@ import (
 var (
 	user32   = windows.NewLazyDLL("user32.dll")
 	kernel32 = windows.NewLazyDLL("kernel32.dll")
+	shcore   = windows.NewLazyDLL("shcore.dll")
+
+	procMonitorFromPoint = user32.NewProc("MonitorFromPoint")
+	procGetDpiForMonitor = shcore.NewProc("GetDpiForMonitor")
 
 	procAddClipboardFormatListener = user32.NewProc("AddClipboardFormatListener")
 	procRegisterClassExW           = user32.NewProc("RegisterClassExW")
@@ -97,4 +101,29 @@ func getCursorPos() (int, int) {
 	var p point
 	procGetCursorPos.Call(uintptr(unsafe.Pointer(&p)))
 	return int(p.X), int(p.Y)
+}
+
+// dpiScaleAtCursor returns the effective DPI scale (1.0 == 100%) of the monitor
+// under the given physical cursor point. Wails' WindowSetPosition expects
+// logical (DIP) coordinates, while GetCursorPos returns physical pixels, so we
+// must divide physical coords by this scale to place the popup at the cursor on
+// scaled displays.
+func dpiScaleAtCursor(physX, physY int32) float64 {
+	const monitorDefaultToNearest = 0x00000002
+	const mdtEffectiveDpi = 0
+	// POINT is passed by value: packed as two 32-bit ints into one 64-bit arg.
+	pt := uintptr(uint32(physX)) | uintptr(uint32(physY))<<32
+	hmon, _, _ := procMonitorFromPoint.Call(pt, monitorDefaultToNearest)
+	if hmon == 0 {
+		return 1.0
+	}
+	var dpiX, dpiY uint32
+	ret, _, _ := procGetDpiForMonitor.Call(
+		hmon, mdtEffectiveDpi,
+		uintptr(unsafe.Pointer(&dpiX)), uintptr(unsafe.Pointer(&dpiY)),
+	)
+	if ret != 0 || dpiX == 0 { // S_OK == 0
+		return 1.0
+	}
+	return float64(dpiX) / 96.0
 }
