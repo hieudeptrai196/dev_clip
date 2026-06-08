@@ -11,10 +11,9 @@ import (
 var (
 	user32   = windows.NewLazyDLL("user32.dll")
 	kernel32 = windows.NewLazyDLL("kernel32.dll")
-	shcore   = windows.NewLazyDLL("shcore.dll")
 
 	procMonitorFromPoint = user32.NewProc("MonitorFromPoint")
-	procGetDpiForMonitor = shcore.NewProc("GetDpiForMonitor")
+	procGetMonitorInfoW  = user32.NewProc("GetMonitorInfoW")
 
 	procAddClipboardFormatListener = user32.NewProc("AddClipboardFormatListener")
 	procRegisterClassExW           = user32.NewProc("RegisterClassExW")
@@ -110,27 +109,35 @@ func getCursorPos() (int, int) {
 	return int(p.X), int(p.Y)
 }
 
-// dpiScaleAtCursor returns the effective DPI scale (1.0 == 100%) of the monitor
-// under the given physical cursor point. Wails' WindowSetPosition expects
-// logical (DIP) coordinates, while GetCursorPos returns physical pixels, so we
-// must divide physical coords by this scale to place the popup at the cursor on
-// scaled displays.
-func dpiScaleAtCursor(physX, physY int32) float64 {
+type rect struct{ Left, Top, Right, Bottom int32 }
+
+type monitorInfo struct {
+	cbSize    uint32
+	rcMonitor rect
+	rcWork    rect
+	dwFlags   uint32
+}
+
+// cursorMonitorWorkOrigin returns the top-left of the work area (screen minus
+// taskbar) of the monitor under the physical cursor point, in physical pixels.
+//
+// Wails positions the window via SetWindowPos at (workRect.Left+x, workRect.Top+y)
+// of the window's monitor. To land the popup exactly at the absolute cursor
+// position we pass cursorPhysical MINUS this work-area origin, so the two
+// offsets cancel out (when the cursor and window share a monitor). This also
+// correctly handles taskbars docked on the top/left.
+func cursorMonitorWorkOrigin(physX, physY int32) (int32, int32) {
 	const monitorDefaultToNearest = 0x00000002
-	const mdtEffectiveDpi = 0
 	// POINT is passed by value: packed as two 32-bit ints into one 64-bit arg.
 	pt := uintptr(uint32(physX)) | uintptr(uint32(physY))<<32
 	hmon, _, _ := procMonitorFromPoint.Call(pt, monitorDefaultToNearest)
 	if hmon == 0 {
-		return 1.0
+		return 0, 0
 	}
-	var dpiX, dpiY uint32
-	ret, _, _ := procGetDpiForMonitor.Call(
-		hmon, mdtEffectiveDpi,
-		uintptr(unsafe.Pointer(&dpiX)), uintptr(unsafe.Pointer(&dpiY)),
-	)
-	if ret != 0 || dpiX == 0 { // S_OK == 0
-		return 1.0
+	var mi monitorInfo
+	mi.cbSize = uint32(unsafe.Sizeof(mi))
+	if r, _, _ := procGetMonitorInfoW.Call(hmon, uintptr(unsafe.Pointer(&mi))); r == 0 {
+		return 0, 0
 	}
-	return float64(dpiX) / 96.0
+	return mi.rcWork.Left, mi.rcWork.Top
 }
