@@ -17,9 +17,13 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:  "devclip",
-		Width:  1024,
-		Height: 768,
+		Title:            "devclip",
+		Width:            480,
+		Height:           560,
+		Frameless:        true,
+		StartHidden:      true,
+		AlwaysOnTop:      true,
+		DisableResize:    true,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
