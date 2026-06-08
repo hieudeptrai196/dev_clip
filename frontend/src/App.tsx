@@ -40,7 +40,13 @@ function App() {
   useEffect(() => {
     const onBlur = () => {
       if (Date.now() < ignoreBlurUntil.current) return; // grace period after show
-      Hide();
+      // A transient blur during the show transition is immediately followed by
+      // focus coming back. Debounce and re-check real focus before hiding so we
+      // only close on a genuine click-away, not a focus bounce.
+      window.setTimeout(() => {
+        if (Date.now() < ignoreBlurUntil.current) return;
+        if (!document.hasFocus()) Hide();
+      }, 120);
     };
     window.addEventListener("blur", onBlur);
     return () => window.removeEventListener("blur", onBlur);

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
@@ -39,6 +40,19 @@ func (a *App) startup(ctx context.Context) {
 	if err := a.eng.Start(); err != nil {
 		runtime.LogError(a.ctx, "engine start failed: "+err.Error())
 	}
+
+	// Warm up WebView2 so the FIRST Alt+V is not a cold start. Without this, the
+	// first popup show races the webview load: JS event listeners aren't ready,
+	// the "popup:show" grace period never applies, and the window flashes shut.
+	// Showing the window far off-screen forces the webview + JS to initialize,
+	// then we hide it again — invisible to the user.
+	go func() {
+		time.Sleep(300 * time.Millisecond)
+		runtime.WindowSetPosition(a.ctx, -32000, -32000)
+		runtime.WindowShow(a.ctx)
+		time.Sleep(600 * time.Millisecond)
+		runtime.WindowHide(a.ctx)
+	}()
 }
 
 // History returns the current clipboard history, newest first (bound to JS).
