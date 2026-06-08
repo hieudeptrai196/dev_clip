@@ -552,12 +552,44 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 6px;
   padding: 6px 4px 4px;
   border-top: 1px solid rgba(255, 255, 255, 0.07);
   font-size: 11px;
   color: rgba(255, 255, 255, 0.40);
+}
+
+.hint-keys {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* Author link (footer, right side) */
+.author-link {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  color: rgba(200, 170, 110, 0.85); /* hextech gold */
+  padding: 2px 5px;
+  border-radius: 4px;
+  transition: color 0.12s, background 0.12s;
+  outline: none;
+}
+
+.author-link:hover {
+  color: #e8c878;
+  background: rgba(200, 170, 110, 0.12);
 }
 
 .hint-sep {
@@ -1005,6 +1037,7 @@
 .preview-overlay,
 .preview-card,
 .preview-close,
+.author-link,
 .ph-input,
 .ph-btn,
 .settings-select,

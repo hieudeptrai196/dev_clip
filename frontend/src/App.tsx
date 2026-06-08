@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { History, PasteItem, Hide, Thumbnail, FormatItem, PasteTransformed, PasteFormatted, Snippets, SnippetPlaceholders, PasteSnippet, GetSettings, SaveSettings, TogglePin, ReorderPins, DeleteItem, ClearAll } from "../wailsjs/go/main/App";
-import { EventsOn, WindowFullscreen, WindowUnfullscreen } from "../wailsjs/runtime/runtime";
+import { EventsOn, WindowFullscreen, WindowUnfullscreen, BrowserOpenURL } from "../wailsjs/runtime/runtime";
 import type { ClipItem, AppSettings } from "./types";
 import { snippet } from "../wailsjs/go/models";
 import { Icon } from "./Icon";
@@ -802,36 +802,44 @@ function App() {
       )}
 
       <div className="hint-bar">
-        {tab === "recent" && (
-          <>
-            <span>&#8593;&#8595; select</span>
-            <span className="hint-sep">&middot;</span>
-            <span>Enter paste</span>
-            <span className="hint-sep">&middot;</span>
+        <div className="hint-keys">
+          {tab === "recent" && (
+            <>
+              <span>&#8593;&#8595; select</span>
+              <span className="hint-sep">&middot;</span>
+              <span>Enter paste</span>
+              <span className="hint-sep">&middot;</span>
+              <span>Esc close</span>
+            </>
+          )}
+          {tab === "snippets" && !phSnippet && (
+            <>
+              <span>&#8593;&#8595; select</span>
+              <span className="hint-sep">&middot;</span>
+              <span>Enter open</span>
+              <span className="hint-sep">&middot;</span>
+              <span>Esc close</span>
+            </>
+          )}
+          {tab === "snippets" && phSnippet && (
+            <>
+              <span>Enter paste</span>
+              <span className="hint-sep">&middot;</span>
+              <span>Esc back</span>
+            </>
+          )}
+          {tab === "settings" && (
             <span>Esc close</span>
-          </>
-        )}
-        {tab === "snippets" && !phSnippet && (
-          <>
-            <span>&#8593;&#8595; select</span>
-            <span className="hint-sep">&middot;</span>
-            <span>Enter open</span>
-            <span className="hint-sep">&middot;</span>
-            <span>Esc close</span>
-          </>
-        )}
-        {tab === "snippets" && phSnippet && (
-          <>
-            <span>Enter paste</span>
-            <span className="hint-sep">&middot;</span>
-            <span>Esc back</span>
-          </>
-        )}
-        {tab === "settings" && (
-          <>
-            <span>Esc close</span>
-          </>
-        )}
+          )}
+        </div>
+        <button
+          className="author-link"
+          title="Author · github.com/hieudeptrai196"
+          onClick={() => BrowserOpenURL("https://github.com/hieudeptrai196")}
+        >
+          <Icon name="github" size={13} />
+          Author
+        </button>
       </div>
     </div>
   );
