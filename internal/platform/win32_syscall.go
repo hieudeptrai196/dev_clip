@@ -45,6 +45,7 @@ var (
 	procTrackPopupMenuEx           = user32.NewProc("TrackPopupMenuEx")
 	procDestroyMenu                = user32.NewProc("DestroyMenu")
 	procLoadImageW                 = user32.NewProc("LoadImageW")
+	procCreateIconFromResourceEx   = user32.NewProc("CreateIconFromResourceEx")
 	procGetCurrentThreadId         = kernel32.NewProc("GetCurrentThreadId")
 	procGetModuleHandleW           = kernel32.NewProc("GetModuleHandleW")
 	procQueryFullProcessImageNameW = kernel32.NewProc("QueryFullProcessImageNameW")
