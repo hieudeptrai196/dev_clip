@@ -12,6 +12,9 @@ var (
 	user32   = windows.NewLazyDLL("user32.dll")
 	kernel32 = windows.NewLazyDLL("kernel32.dll")
 
+	procMonitorFromPoint = user32.NewProc("MonitorFromPoint")
+	procGetMonitorInfoW  = user32.NewProc("GetMonitorInfoW")
+
 	procAddClipboardFormatListener = user32.NewProc("AddClipboardFormatListener")
 	procRegisterClassExW           = user32.NewProc("RegisterClassExW")
 	procCreateWindowExW            = user32.NewProc("CreateWindowExW")
@@ -31,6 +34,10 @@ var (
 	procGetWindowThreadProcessId   = user32.NewProc("GetWindowThreadProcessId")
 	procGetCursorPos               = user32.NewProc("GetCursorPos")
 	procSendInput                  = user32.NewProc("SendInput")
+	procAttachThreadInput          = user32.NewProc("AttachThreadInput")
+	procSetFocus                   = user32.NewProc("SetFocus")
+	procBringWindowToTop           = user32.NewProc("BringWindowToTop")
+	procGetCurrentThreadId         = kernel32.NewProc("GetCurrentThreadId")
 	procQueryFullProcessImageNameW = kernel32.NewProc("QueryFullProcessImageNameW")
 	procGlobalAlloc                = kernel32.NewProc("GlobalAlloc")
 	procGlobalLock                 = kernel32.NewProc("GlobalLock")
@@ -45,7 +52,9 @@ const (
 	wmClipboardUpdate = 0x031D
 	wmHotkey          = 0x0312
 
-	modAlt = 0x0001
+	modAlt     = 0x0001
+	modControl = 0x0002
+	modShift   = 0x0004
 
 	ghMemMoveable = 0x0002
 
@@ -53,6 +62,7 @@ const (
 	keyEventKeyUp = 0x0002
 	vkControl     = 0x11
 	vkV           = 0x56
+	vkOEM3        = 0xC0 // the `~ key (backtick / grave), left of the 1 key
 
 	processQueryLimitedInformation = 0x1000
 )
@@ -97,4 +107,37 @@ func getCursorPos() (int, int) {
 	var p point
 	procGetCursorPos.Call(uintptr(unsafe.Pointer(&p)))
 	return int(p.X), int(p.Y)
+}
+
+type rect struct{ Left, Top, Right, Bottom int32 }
+
+type monitorInfo struct {
+	cbSize    uint32
+	rcMonitor rect
+	rcWork    rect
+	dwFlags   uint32
+}
+
+// cursorMonitorWorkOrigin returns the top-left of the work area (screen minus
+// taskbar) of the monitor under the physical cursor point, in physical pixels.
+//
+// Wails positions the window via SetWindowPos at (workRect.Left+x, workRect.Top+y)
+// of the window's monitor. To land the popup exactly at the absolute cursor
+// position we pass cursorPhysical MINUS this work-area origin, so the two
+// offsets cancel out (when the cursor and window share a monitor). This also
+// correctly handles taskbars docked on the top/left.
+func cursorMonitorWorkOrigin(physX, physY int32) (int32, int32) {
+	const monitorDefaultToNearest = 0x00000002
+	// POINT is passed by value: packed as two 32-bit ints into one 64-bit arg.
+	pt := uintptr(uint32(physX)) | uintptr(uint32(physY))<<32
+	hmon, _, _ := procMonitorFromPoint.Call(pt, monitorDefaultToNearest)
+	if hmon == 0 {
+		return 0, 0
+	}
+	var mi monitorInfo
+	mi.cbSize = uint32(unsafe.Sizeof(mi))
+	if r, _, _ := procGetMonitorInfoW.Call(hmon, uintptr(unsafe.Pointer(&mi))); r == 0 {
+		return 0, 0
+	}
+	return mi.rcWork.Left, mi.rcWork.Top
 }
