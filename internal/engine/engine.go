@@ -281,6 +281,22 @@ func (e *Engine) PasteFormatted(id uint64) error {
 func (e *Engine) History() []*clip.ClipItem { return e.cfg.Store.List() }
 func (e *Engine) Clear()                    { e.cfg.Store.Clear() }
 
+// TogglePin flips the pinned state of the given item and notifies the UI.
+func (e *Engine) TogglePin(id uint64) {
+	e.cfg.Store.TogglePin(id)
+	if e.onChange != nil {
+		e.onChange()
+	}
+}
+
+// ReorderPins applies a new display order to the pinned group and notifies the UI.
+func (e *Engine) ReorderPins(ids []uint64) {
+	e.cfg.Store.ReorderPins(ids)
+	if e.onChange != nil {
+		e.onChange()
+	}
+}
+
 // ItemImagePNG returns the PNG bytes of an image item, or nil if not an image.
 func (e *Engine) ItemImagePNG(id uint64) []byte {
 	it := e.cfg.Store.Get(id)
