@@ -1,0 +1,8 @@
+export interface ClipItem {
+  id: number;
+  kind: number; // 0 = text, 1 = image
+  text: string;
+  preview: string;
+  createdAt: string;
+  pinned: boolean;
+}

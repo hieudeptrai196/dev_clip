@@ -25,6 +25,7 @@ type Engine struct {
 	mu            sync.Mutex
 	pasteTgt      platform.WindowRef
 	onChange      func()
+	onHotkey      func()
 	lastSelfWrite uint64 // hash we wrote ourselves, to ignore on next change
 }
 
@@ -43,6 +44,7 @@ func (e *Engine) Start() error {
 }
 
 func (e *Engine) OnChange(fn func()) { e.onChange = fn }
+func (e *Engine) OnHotkey(fn func()) { e.onHotkey = fn }
 
 func (e *Engine) handleClipboardChange() {
 	// Drop captures coming from blocked apps.
@@ -105,6 +107,9 @@ func (e *Engine) handleHotkey(id int) {
 	e.mu.Lock()
 	e.pasteTgt = e.cfg.Platform.CaptureForegroundWindow()
 	e.mu.Unlock()
+	if e.onHotkey != nil {
+		e.onHotkey()
+	}
 }
 
 func (e *Engine) PasteTarget() platform.WindowRef {

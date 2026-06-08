@@ -2,26 +2,60 @@ package main
 
 import (
 	"context"
-	"fmt"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
+
+	"devclip/internal/clip"
+	"devclip/internal/engine"
+	"devclip/internal/platform"
+	"devclip/internal/security"
 )
 
-// App struct
+// App is the Wails-bound application surface.
 type App struct {
 	ctx context.Context
+	eng *engine.Engine
 }
 
-// NewApp creates a new App application struct
-func NewApp() *App {
-	return &App{}
-}
+func NewApp() *App { return &App{} }
 
-// startup is called when the app starts. The context is saved
-// so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	a.eng = engine.New(engine.Config{
+		Platform: platform.NewPlatform(),
+		Store:    clip.NewStore(100),
+		Filter:   security.NewFilter(security.DefaultBlocklist()),
+		Capacity: 100,
+	})
+	a.eng.OnChange(func() {
+		runtime.EventsEmit(a.ctx, "clip:changed")
+	})
+	a.eng.OnHotkey(func() {
+		x, y := platform.NewPlatform().CursorPos()
+		runtime.WindowSetPosition(a.ctx, x, y)
+		runtime.WindowShow(a.ctx)
+		runtime.EventsEmit(a.ctx, "popup:show")
+	})
+	if err := a.eng.Start(); err != nil {
+		runtime.LogError(a.ctx, "engine start failed: "+err.Error())
+	}
 }
 
-// Greet returns a greeting for the given name
-func (a *App) Greet(name string) string {
-	return fmt.Sprintf("Hello %s, It's show time!", name)
+// History returns the current clipboard history, newest first (bound to JS).
+func (a *App) History() []*clip.ClipItem { return a.eng.History() }
+
+// PasteItem writes the selected item to the clipboard and pastes it into the
+// previously focused window (bound to JS).
+func (a *App) PasteItem(id uint64) error { return a.eng.PasteItem(id) }
+
+// CursorPos returns the current cursor position (bound to JS).
+func (a *App) CursorPos() []int {
+	x, y := platform.NewPlatform().CursorPos()
+	return []int{x, y}
 }
+
+// Clear empties the history (bound to JS).
+func (a *App) Clear() { a.eng.Clear() }
+
+// Hide hides the popup window (bound to JS).
+func (a *App) Hide() { runtime.WindowHide(a.ctx) }
