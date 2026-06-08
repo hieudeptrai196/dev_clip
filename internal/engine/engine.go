@@ -22,12 +22,14 @@ type Config struct {
 }
 
 type Engine struct {
-	cfg           Config
-	mu            sync.Mutex
-	pasteTgt      platform.WindowRef
-	onChange      func()
-	onHotkey      func()
-	lastSelfWrite uint64 // hash we wrote ourselves, to ignore on next change
+	cfg              Config
+	mu               sync.Mutex
+	pasteTgt         platform.WindowRef
+	onChange         func()
+	onHotkey         func()
+	onShowSettings   func()
+	onQuitRequested  func()
+	lastSelfWrite    uint64 // hash we wrote ourselves, to ignore on next change
 }
 
 func New(cfg Config) *Engine {
@@ -41,11 +43,39 @@ func (e *Engine) Start() error {
 	return e.cfg.Platform.Start(platform.EventsFunc{
 		ClipboardChange: e.handleClipboardChange,
 		Hotkey:          e.handleHotkey,
+		ShowSettings:    e.handleShowSettings,
+		QuitRequested:   e.handleQuitRequested,
 	})
 }
 
-func (e *Engine) OnChange(fn func()) { e.onChange = fn }
-func (e *Engine) OnHotkey(fn func()) { e.onHotkey = fn }
+func (e *Engine) OnChange(fn func())         { e.onChange = fn }
+func (e *Engine) OnHotkey(fn func())          { e.onHotkey = fn }
+func (e *Engine) OnShowSettings(fn func())    { e.onShowSettings = fn }
+func (e *Engine) OnQuitRequested(fn func())   { e.onQuitRequested = fn }
+
+func (e *Engine) handleShowSettings() {
+	if e.onShowSettings != nil {
+		e.onShowSettings()
+	}
+}
+
+func (e *Engine) handleQuitRequested() {
+	if e.onQuitRequested != nil {
+		e.onQuitRequested()
+	}
+}
+
+// UpdateHotkey re-registers the paste hotkey with a new modifier+key combo.
+func (e *Engine) UpdateHotkey(mod, key uint) error {
+	return e.cfg.Platform.UpdateHotkey(mod, key)
+}
+
+// UpdateFilter replaces the security filter with a new blocklist.
+func (e *Engine) UpdateFilter(filter *security.SecurityFilter) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.cfg.Filter = filter
+}
 
 func (e *Engine) handleClipboardChange() {
 	// Drop captures coming from blocked apps.
