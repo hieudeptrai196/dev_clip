@@ -12,6 +12,40 @@
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   color: rgba(255, 255, 255, 0.90);
   user-select: none;
+  position: relative;
+}
+
+/* ── Close button (top-right corner) ── */
+.close-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  z-index: 10;
+  transition: background 0.12s, color 0.12s;
+  outline: none;
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.90);
+}
+
+.close-btn:focus-visible {
+  outline: 1px solid rgba(0, 120, 212, 0.70);
+  outline-offset: 1px;
 }
 
 /* ── Search bar ── */
@@ -29,7 +63,7 @@
   color: rgba(255, 255, 255, 0.92);
   font-family: inherit;
   font-size: 13px;
-  padding: 7px 10px;
+  padding: 7px 38px 7px 10px;
   outline: none;
   transition: border-color 0.15s, background 0.15s;
 }
