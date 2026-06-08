@@ -111,6 +111,16 @@
 
 ---
 
+## ⭐ Ủng hộ
+
+Nếu thấy DevClip hữu ích, cho mình xin một **star** ⭐ nhé — rất có ý nghĩa với mình!
+
+Hoặc **mời mình một ly cà phê** ☕ bằng cách quét mã QR bên dưới:
+
+<div align="center">
+  <img src="docs/donate-qr.png" alt="Buy me a coffee" width="220" />
+</div>
+
 ## 👤 Tác giả
 
 Thực hiện bởi [**@hieudeptrai196**](https://github.com/hieudeptrai196).
