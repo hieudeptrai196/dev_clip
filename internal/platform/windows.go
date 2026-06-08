@@ -427,6 +427,12 @@ func (p *windowsPlatform) SimulatePaste(target WindowRef) error {
 // input thread to the target's thread (AttachThreadInput) — the standard trick
 // for restoring focus to the editor the user was typing in before pasting.
 func focusTargetWindow(target windows.Handle) {
+	// Guard: if the window was closed between hotkey press and paste selection,
+	// IsWindow returns 0 — bail out to avoid attaching to a dead thread.
+	if r, _, _ := procIsWindow.Call(uintptr(target)); r == 0 {
+		return
+	}
+
 	ourThread, _, _ := procGetCurrentThreadId.Call()
 
 	var targetPID uint32

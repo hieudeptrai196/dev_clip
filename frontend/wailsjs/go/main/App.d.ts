@@ -51,7 +51,7 @@ export function SnippetPlaceholders(arg1:number):Promise<Array<string>>;
 
 export function Snippets():Promise<Array<snippet.Snippet>>;
 
-export function TestHotkey(arg1:number,arg2:number):Promise<boolean>;
+export function ValidateHotkey(arg1:number,arg2:number):Promise<boolean>;
 
 export function Thumbnail(arg1:number):Promise<string>;
 

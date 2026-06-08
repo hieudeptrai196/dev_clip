@@ -11,6 +11,21 @@ import (
 //go:embed appicon.png
 var appIconBytes []byte
 
+// localOnlyMiddleware rejects any HTTP request that carries an Origin header.
+// Browsers always attach Origin to cross-origin fetch/XHR requests, so this
+// effectively prevents any website from reading clipboard data via the
+// dashboard API while still allowing the dashboard HTML itself (opened
+// directly in the browser's address bar) to work fine.
+func localOnlyMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Origin") != "" {
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
+		}
+		next(w, r)
+	}
+}
+
 func (e *Engine) StartDashboard() error {
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -23,9 +38,9 @@ func (e *Engine) StartDashboard() error {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", e.serveDashboardHTML)
-	mux.HandleFunc("/api/stats", e.serveStats)
-	mux.HandleFunc("/api/image", e.serveImage)
-	mux.HandleFunc("/api/logo", e.serveLogo)
+	mux.HandleFunc("/api/stats", localOnlyMiddleware(e.serveStats))
+	mux.HandleFunc("/api/image", localOnlyMiddleware(e.serveImage))
+	mux.HandleFunc("/api/logo", localOnlyMiddleware(e.serveLogo))
 
 	server := &http.Server{Handler: mux}
 	go func() {
@@ -48,13 +63,11 @@ func (e *Engine) serveDashboardHTML(w http.ResponseWriter, r *http.Request) {
 }
 
 func (e *Engine) serveLogo(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "image/png")
 	w.Write(appIconBytes)
 }
 
 func (e *Engine) serveImage(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	idStr := r.URL.Query().Get("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
@@ -72,7 +85,6 @@ func (e *Engine) serveImage(w http.ResponseWriter, r *http.Request) {
 
 func (e *Engine) serveStats(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	e.mu.Lock()
 	total := e.totalCopies
