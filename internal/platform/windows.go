@@ -4,6 +4,7 @@ package platform
 
 import (
 	"errors"
+	"fmt"
 	"syscall"
 	"time"
 	"unsafe"
@@ -81,9 +82,11 @@ func (p *windowsPlatform) messageLoop(ready chan<- error) {
 		return
 	}
 
-	// Register Alt+V as the paste hotkey.
+	// Register Alt+V as the paste hotkey. RegisterHotKey gives OS-level priority:
+	// once registered, no normal app can intercept it. It only fails (r==0) if
+	// another app already reserved Alt+V globally — surfaced as a start error.
 	if r, _, err := procRegisterHotKey.Call(hwnd, uintptr(HotkeyPasteID), modAlt, vkV); r == 0 {
-		ready <- err
+		ready <- fmt.Errorf("RegisterHotKey(Alt+V) failed (another app may hold it): %w", err)
 		return
 	}
 
@@ -219,8 +222,8 @@ func (p *windowsPlatform) CaptureForegroundWindow() WindowRef {
 
 func (p *windowsPlatform) SimulatePaste(target WindowRef) error {
 	if target != 0 {
-		procSetForegroundWindow.Call(uintptr(target))
-		time.Sleep(30 * time.Millisecond) // let focus settle
+		focusTargetWindow(windows.Handle(target))
+		time.Sleep(40 * time.Millisecond) // let focus settle
 	}
 	inputs := []keyboardInput{
 		makeKey(vkControl, false),
@@ -239,7 +242,36 @@ func (p *windowsPlatform) SimulatePaste(target WindowRef) error {
 	return nil
 }
 
-func (p *windowsPlatform) CursorPos() (int, int) { return getCursorPos() }
+// focusTargetWindow reliably brings `target` to the foreground and gives it
+// keyboard focus. A plain SetForegroundWindow call from another process is
+// usually blocked by Windows' foreground lock, so we temporarily attach our
+// input thread to the target's thread (AttachThreadInput) — the standard trick
+// for restoring focus to the editor the user was typing in before pasting.
+func focusTargetWindow(target windows.Handle) {
+	ourThread, _, _ := procGetCurrentThreadId.Call()
+
+	var targetPID uint32
+	targetThread, _, _ := procGetWindowThreadProcessId.Call(
+		uintptr(target), uintptr(unsafe.Pointer(&targetPID)))
+
+	if targetThread != 0 && targetThread != ourThread {
+		procAttachThreadInput.Call(ourThread, targetThread, 1) // attach
+		procBringWindowToTop.Call(uintptr(target))
+		procSetForegroundWindow.Call(uintptr(target))
+		procSetFocus.Call(uintptr(target))
+		procAttachThreadInput.Call(ourThread, targetThread, 0) // detach
+	} else {
+		procSetForegroundWindow.Call(uintptr(target))
+	}
+}
+
+func (p *windowsPlatform) CursorPos() (int, int) {
+	x, y := getCursorPos() // physical pixels (absolute screen coords)
+	// Wails adds the window monitor's work-area origin, so subtract the cursor
+	// monitor's work-area origin to land the popup at the absolute cursor.
+	wl, wt := cursorMonitorWorkOrigin(int32(x), int32(y))
+	return x - int(wl), y - int(wt)
+}
 
 func (p *windowsPlatform) RegisterHotkey(spec HotkeySpec) error {
 	if r, _, err := procRegisterHotKey.Call(

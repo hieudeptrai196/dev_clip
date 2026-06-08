@@ -21,3 +21,7 @@ export function History() {
 export function PasteItem(arg1) {
   return window['go']['main']['App']['PasteItem'](arg1);
 }
+
+export function Thumbnail(arg1) {
+  return window['go']['main']['App']['Thumbnail'](arg1);
+}
