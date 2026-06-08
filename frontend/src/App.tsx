@@ -405,12 +405,14 @@ function App() {
         >
           Recent
         </button>
+        {/* Snippets feature temporarily disabled
         <button
           className={`tab${tab === "snippets" ? " tab--active" : ""}`}
           onClick={() => setTab("snippets")}
         >
           Snippets
         </button>
+        */}
       </div>
 
       {tab === "recent" && (
