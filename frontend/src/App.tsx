@@ -1,8 +1,18 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { History, PasteItem, Hide, Thumbnail } from "../wailsjs/go/main/App";
+import { History, PasteItem, Hide, Thumbnail, FormatItem, PasteTransformed, PasteFormatted } from "../wailsjs/go/main/App";
 import { EventsOn } from "../wailsjs/runtime/runtime";
 import type { ClipItem } from "./types";
 import "./App.css";
+
+// Transform ops shown as action buttons for text items.
+const TRANSFORM_OPS: { label: string; op: string }[] = [
+  { label: "Aa", op: "upper" },
+  { label: "aa", op: "lower" },
+  { label: "camel", op: "camel" },
+  { label: "snake", op: "snake" },
+  { label: "kebab", op: "kebab" },
+  { label: "b64", op: "base64encode" },
+];
 
 function App() {
   const [items, setItems] = useState<ClipItem[]>([]);
@@ -83,6 +93,20 @@ function App() {
     setSel(0);
   };
 
+  const doTransform = async (item: ClipItem, op: string) => {
+    await PasteTransformed(item.id, op);
+    await Hide();
+    setQuery("");
+    setSel(0);
+  };
+
+  const doPretty = async (item: ClipItem) => {
+    await PasteFormatted(item.id);
+    await Hide();
+    setQuery("");
+    setSel(0);
+  };
+
   const onKeyDown = async (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -119,28 +143,66 @@ function App() {
         {filtered.length === 0 && (
           <li className="empty-state">No clipboard history yet</li>
         )}
-        {filtered.map((it, i) => (
-          <li
-            key={it.id}
-            ref={(el) => { itemRefs.current[i] = el; }}
-            className={`clip-item${i === clampedSel ? " selected" : ""}`}
-            onClick={() => doPaste(it)}
-            onMouseEnter={() => setSel(i)}
-          >
-            {it.kind === 1 ? (
-              <span className="image-label">
-                {thumbs[it.id] ? (
-                  <img className="thumb" src={thumbs[it.id]} alt="clipboard image" />
+        {filtered.map((it, i) => {
+          const isSelected = i === clampedSel;
+          const isText = it.kind === 0;
+          const hasFmt = isText && (it.format === "json" || it.format === "sql");
+          return (
+            <li
+              key={it.id}
+              ref={(el) => { itemRefs.current[i] = el; }}
+              className={`clip-item${isSelected ? " selected" : ""}`}
+              onClick={() => doPaste(it)}
+              onMouseEnter={() => setSel(i)}
+            >
+              <div className="item-row">
+                {it.kind === 1 ? (
+                  <span className="image-label">
+                    {thumbs[it.id] ? (
+                      <img className="thumb" src={thumbs[it.id]} alt="clipboard image" />
+                    ) : (
+                      <span className="image-icon">&#9638;</span>
+                    )}
+                    <span className="image-text">Image</span>
+                  </span>
                 ) : (
-                  <span className="image-icon">&#9638;</span>
+                  <span className="item-text">{it.preview}</span>
                 )}
-                <span className="image-text">Image</span>
-              </span>
-            ) : (
-              <span className="item-text">{it.preview}</span>
-            )}
-          </li>
-        ))}
+                {hasFmt && (
+                  <span className={`fmt-badge fmt-badge--${it.format}`}>
+                    {it.format.toUpperCase()}
+                  </span>
+                )}
+              </div>
+              {isSelected && isText && (
+                <div
+                  className="action-row"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {TRANSFORM_OPS.map(({ label, op }) => (
+                    <button
+                      key={op}
+                      className="action-btn"
+                      title={op}
+                      onClick={(e) => { e.stopPropagation(); doTransform(it, op); }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                  {hasFmt && (
+                    <button
+                      className="action-btn action-btn--pretty"
+                      title="Pretty print"
+                      onClick={(e) => { e.stopPropagation(); doPretty(it); }}
+                    >
+                      Pretty
+                    </button>
+                  )}
+                </div>
+              )}
+            </li>
+          );
+        })}
       </ul>
 
       <div className="hint-bar">
