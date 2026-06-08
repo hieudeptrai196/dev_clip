@@ -82,9 +82,8 @@ func (p *windowsPlatform) messageLoop(ready chan<- error) {
 	}
 
 	// Register Alt+V as the paste hotkey.
-	// Alt+` (backtick): a comfortable two-key combo. Backtick is not a menu
-	// mnemonic, so it won't trigger the Alt menu bar in apps like VS Code.
-	if r, _, err := procRegisterHotKey.Call(hwnd, uintptr(HotkeyPasteID), modAlt, vkOEM3); r == 0 {
+	// Ctrl+Shift+V: avoids the Alt menu mnemonics (e.g. VS Code 'View' menu).
+	if r, _, err := procRegisterHotKey.Call(hwnd, uintptr(HotkeyPasteID), modControl|modShift, vkV); r == 0 {
 		ready <- err
 		return
 	}
