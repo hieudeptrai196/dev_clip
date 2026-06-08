@@ -129,8 +129,12 @@ func (p *windowsPlatform) addTrayIcon() error {
 	}
 	setTipText(&p.trayNID, "DevClip — Alt+V clipboard manager")
 
-	// Try to load icon from the exe's directory (build/appicon.ico).
-	icon := loadTrayIcon()
+	// Build the icon from the embedded .ico (reliable, format-agnostic), and
+	// fall back to the exe resource / file loader only if that fails.
+	icon := loadEmbeddedTrayIcon()
+	if icon == 0 {
+		icon = loadTrayIcon()
+	}
 	if icon != 0 {
 		p.trayNID.HIcon = icon
 	} else {
