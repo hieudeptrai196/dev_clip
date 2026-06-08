@@ -1058,6 +1058,7 @@
 .settings-toggle-btn,
 .dashboard-launcher-btn,
 .search-input,
+.search-filter-select,
 .clear-all-btn,
 .clip-item,
 .pin-btn,
@@ -1238,6 +1239,32 @@
 .jwt-pane--payload .jwt-pre {
   color: #60a5fa; /* blue/cyan payload code */
 }
+
+/* ── Search filter dropdown styling ── */
+.search-filter-select {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.80);
+  font-family: inherit;
+  font-size: 12px;
+  padding: 6px 10px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+
+.search-filter-select option {
+  background: #202020;
+  color: #fff;
+}
+
+.search-filter-select:focus {
+  border-color: rgba(0, 120, 212, 0.70);
+  background: rgba(255, 255, 255, 0.11);
+}
+
 
 
 
