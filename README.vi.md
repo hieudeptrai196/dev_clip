@@ -16,8 +16,12 @@
 
 > Copy bất cứ thứ gì, bấm **Alt + V** rồi dán lại — kèm các "siêu năng lực" cho dev như format JSON/SQL, biến đổi chuỗi, ghim và preview toàn màn hình.
 
-<!-- TODO: thay bằng GIF demo thật -->
-<!-- ![demo](docs/demo.gif) -->
+## 📸 Ảnh chụp màn hình
+
+| Lịch sử Clipboard | Cài đặt |
+|---|---|
+| ![Lịch sử Clipboard](docs/history.png) | ![Cài đặt](docs/settings.png) |
+
 
 ---
 

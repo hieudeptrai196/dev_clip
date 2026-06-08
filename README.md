@@ -16,8 +16,12 @@ English · [Tiếng Việt](README.vi.md)
 
 > Copy anything, press **Alt + V**, and paste it back — with developer super‑powers like JSON/SQL formatting, case transforms, pinning and fullscreen preview.
 
-<!-- TODO: replace with a real demo GIF -->
-<!-- ![demo](docs/demo.gif) -->
+## 📸 Screenshots
+
+| Clipboard History | Settings |
+|---|---|
+| ![Clipboard History](docs/history.png) | ![Settings](docs/settings.png) |
+
 
 ---
 
