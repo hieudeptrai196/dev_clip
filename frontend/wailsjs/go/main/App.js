@@ -54,6 +54,10 @@ export function RemoveFromBlocklist(arg1) {
   return window['go']['main']['App']['RemoveFromBlocklist'](arg1);
 }
 
+export function ReorderPins(arg1) {
+  return window['go']['main']['App']['ReorderPins'](arg1);
+}
+
 export function SaveSettings(arg1) {
   return window['go']['main']['App']['SaveSettings'](arg1);
 }
@@ -72,4 +76,8 @@ export function TestHotkey(arg1, arg2) {
 
 export function Thumbnail(arg1) {
   return window['go']['main']['App']['Thumbnail'](arg1);
+}
+
+export function TogglePin(arg1) {
+  return window['go']['main']['App']['TogglePin'](arg1);
 }
