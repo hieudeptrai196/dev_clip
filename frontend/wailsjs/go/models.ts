@@ -8,6 +8,7 @@ export namespace clip {
 	    // Go type: time
 	    createdAt: any;
 	    pinned: boolean;
+	    format: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new ClipItem(source);
@@ -21,6 +22,7 @@ export namespace clip {
 	        this.preview = source["preview"];
 	        this.createdAt = this.convertValues(source["createdAt"], null);
 	        this.pinned = source["pinned"];
+	        this.format = source["format"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

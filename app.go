@@ -83,5 +83,18 @@ func (a *App) Thumbnail(id uint64) string {
 	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(png)
 }
 
+// FormatItem returns the pretty-printed text for a JSON or SQL item, or the
+// original text for a plain item (bound to JS). Returns "" for image items.
+func (a *App) FormatItem(id uint64) string { return a.eng.FormatItem(id) }
+
+// PasteTransformed transforms the item text with the given op then pastes it
+// (bound to JS). Valid ops: "upper","lower","camel","snake","kebab","base64encode".
+func (a *App) PasteTransformed(id uint64, op string) error {
+	return a.eng.PasteTransformed(id, op)
+}
+
+// PasteFormatted pastes the pretty-printed version of the item (bound to JS).
+func (a *App) PasteFormatted(id uint64) error { return a.eng.PasteFormatted(id) }
+
 // Hide hides the popup window (bound to JS).
 func (a *App) Hide() { runtime.WindowHide(a.ctx) }

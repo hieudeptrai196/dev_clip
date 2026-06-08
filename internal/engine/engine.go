@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"devclip/internal/clip"
+	"devclip/internal/format"
 	"devclip/internal/platform"
 	"devclip/internal/security"
 )
@@ -65,11 +66,19 @@ func (e *Engine) handleClipboardChange() {
 		if raw.Text == "" {
 			return
 		}
+		fmtLabel := "plain"
+		switch format.Detect(raw.Text) {
+		case format.JSON:
+			fmtLabel = "json"
+		case format.SQL:
+			fmtLabel = "sql"
+		}
 		item = &clip.ClipItem{
 			Kind:    clip.KindText,
 			Text:    raw.Text,
 			Preview: preview(raw.Text),
 			Hash:    clip.HashText(raw.Text),
+			Format:  fmtLabel,
 		}
 	case platform.ClipImage:
 		if len(raw.Image) == 0 {
@@ -158,6 +167,82 @@ func (e *Engine) PasteItem(id uint64) error {
 		}()
 	}
 	return nil
+}
+
+// pasteText writes text to the clipboard, simulates paste, then restores the
+// previous clipboard contents after RestoreDelay.
+func (e *Engine) pasteText(text string) error {
+	prev, _ := e.cfg.Platform.ReadClipboard()
+	e.mu.Lock()
+	e.lastSelfWrite = clip.HashText(text)
+	e.mu.Unlock()
+	if err := e.cfg.Platform.WriteClipboard(&platform.RawClip{Kind: platform.ClipText, Text: text}); err != nil {
+		return err
+	}
+	e.mu.Lock()
+	target := e.pasteTgt
+	e.mu.Unlock()
+	if err := e.cfg.Platform.SimulatePaste(target); err != nil {
+		return err
+	}
+	if prev != nil {
+		go func() {
+			time.Sleep(e.cfg.RestoreDelay)
+			_ = e.cfg.Platform.WriteClipboard(prev)
+		}()
+	}
+	return nil
+}
+
+// FormatItem returns a pretty-printed string for the given text item:
+// indented JSON for "json" items, formatted SQL for "sql" items, or the
+// original text for "plain" items. Returns "" if the item is not found or is
+// an image item.
+func (e *Engine) FormatItem(id uint64) string {
+	it := e.cfg.Store.Get(id)
+	if it == nil || it.Kind != clip.KindText {
+		return ""
+	}
+	switch it.Format {
+	case "json":
+		s, err := format.PrettyJSON(it.Text)
+		if err != nil {
+			return it.Text
+		}
+		return s
+	case "sql":
+		return format.FormatSQL(it.Text)
+	default:
+		return it.Text
+	}
+}
+
+// PasteTransformed transforms the item's text using format.Transform then
+// pastes it via pasteText. Returns an error if the item is not found or is an
+// image.
+func (e *Engine) PasteTransformed(id uint64, op string) error {
+	it := e.cfg.Store.Get(id)
+	if it == nil {
+		return fmt.Errorf("item %d not found", id)
+	}
+	if it.Kind != clip.KindText {
+		return fmt.Errorf("item %d is not a text item", id)
+	}
+	return e.pasteText(format.Transform(it.Text, op))
+}
+
+// PasteFormatted pastes the pretty-printed version of the given text item.
+// Returns an error if the item is not found or is an image.
+func (e *Engine) PasteFormatted(id uint64) error {
+	s := e.FormatItem(id)
+	if s == "" {
+		it := e.cfg.Store.Get(id)
+		if it == nil {
+			return fmt.Errorf("item %d not found", id)
+		}
+		return fmt.Errorf("item %d is not a text item", id)
+	}
+	return e.pasteText(s)
 }
 
 func (e *Engine) History() []*clip.ClipItem { return e.cfg.Store.List() }
