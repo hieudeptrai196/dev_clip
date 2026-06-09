@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/banner.png" alt="DevClip — Copy anything. Paste it smarter." width="100%" />
+</p>
+
 <div align="center">
 
 <img src="build/appicon.png" alt="DevClip logo" width="120" />
