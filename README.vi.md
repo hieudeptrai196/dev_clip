@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="docs/banner.png" alt="DevClip — Copy anything. Paste it smarter." width="100%" />
-</p>
-
 <div align="center">
 
 <img src="build/appicon.png" alt="DevClip logo" width="120" />
@@ -9,6 +5,8 @@
 # DevClip
 
 **Clipboard manager chạy ngầm dành cho lập trình viên — đơn giản như `Win + V`, chỉ là thông minh hơn.**
+
+<img src="docs/banner.png" alt="DevClip — Copy anything. Paste it smarter." width="100%" />
 
 [English](README.md) · Tiếng Việt
 

@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="docs/banner.png" alt="DevClip — Copy anything. Paste it smarter." width="100%" />
-</p>
-
 <div align="center">
 
 <img src="build/appicon.png" alt="DevClip logo" width="120" />
@@ -9,6 +5,8 @@
 # DevClip
 
 **A background clipboard manager built for developers — as simple as `Win + V`, just smarter.**
+
+<img src="docs/banner.png" alt="DevClip — Copy anything. Paste it smarter." width="100%" />
 
 English · [Tiếng Việt](README.vi.md)
 
