@@ -42,24 +42,38 @@
 
 ---
 
-## 🆚 DevClip so với Windows + V
+## 🆚 DevClip so với các công cụ khác
 
-| | Windows + V | DevClip |
-|---|:---:|:---:|
-| Đối tượng | Người dùng phổ thông | **Lập trình viên** |
-| Dung lượng lịch sử | — | **10–500 (tuỳ chỉnh)** |
-| Hotkey | Cố định `Win+V` | **Đổi được** |
-| Tìm kiếm | ❌ | ✅ |
-| Format code (JSON/SQL) | ❌ | ✅ **(Pretty & Nén)** |
-| Bộ giải mã JWT | ❌ | ✅ **(Split‑view & hạn token)** |
-| Bộ đổi Timestamp | ❌ | ✅ **(Epoch ⇄ Ngày cục bộ)** |
-| Dashboard Web thống kê | ❌ | ✅ **(Giao diện web trực quan)** |
-| Biến đổi chuỗi | ❌ | ✅ (`UPPER`, `camel`, `snake`, v.v.) |
-| Ghim | ✅ | ✅ + **kéo‑thả sắp xếp** |
-| Preview toàn màn hình | ❌ | ✅ |
-| Mã nguồn mở | ❌ | ✅ |
+DevClip đứng trên 3 trụ cột mà các lựa chọn khác không gộp được:
 
-> DevClip không nhằm thay thế hoàn toàn Win + V — nó tối ưu cho luồng làm việc của **lập trình viên**.
+- 🔒 **Riêng tư từ thiết kế** — lịch sử chỉ nằm trên RAM, bốc hơi khi thoát, và tự bỏ qua các app nhạy cảm (trình quản lý mật khẩu). Win + V, Raycast và CopyQ đều lưu lịch sử xuống ổ cứng.
+- 🧑‍💻 **Sinh ra cho code** — tự nhận diện và decode JSON, SQL, JWT, timestamp, kèm biến đổi chuỗi và nén. Các tool kia đều đa dụng chung chung.
+- 🆓 **Miễn phí, mã nguồn mở & nhẹ** — không subscription, không tài khoản, footprint Go + Wails nhỏ gọn.
+
+| | Windows + V | Raycast | CopyQ | **DevClip** |
+|---|:---:|:---:|:---:|:---:|
+| Nền tảng | Windows | macOS + Windows *(beta)* | Win / Mac / Linux | Windows |
+| Giá / license | Built‑in | Freemium, Pro $8+/th | Free, mã nguồn mở | **Free, mã nguồn mở** |
+| Hướng tới | Người dùng phổ thông | Launcher đa năng | Power clipboard | **Clipboard cho dev** |
+| Lưu lịch sử | Ổ cứng | Ổ cứng (mã hoá) | Ổ cứng | **Chỉ RAM** ⭐ |
+| Xoá khi tắt máy | ❌ | ❌ | ❌ | **✅** ⭐ |
+| Tự bỏ qua app mật khẩu | ❌ | ❌ | ❌ | **✅** ⭐ |
+| Format + nén JSON / SQL | ❌ | ❌ | scripting | **✅** ⭐ |
+| Giải mã JWT | ❌ | ❌ | ❌ | **✅** ⭐ |
+| Đổi Epoch ⇄ ngày | ❌ | ❌ | ❌ | **✅** ⭐ |
+| Biến đổi chuỗi | ❌ | qua extension | qua scripting | **✅ sẵn** |
+| Tìm kiếm | ❌ | ✅ | ✅ | ✅ |
+| Ghim / sắp xếp | ✅ | ✅ | ✅ (tabs) | ✅ + **kéo‑thả** |
+| Hotkey tuỳ chỉnh | ❌ | ✅ | ✅ | ✅ |
+| Độ nặng | OS sẵn | Nặng hơn | Nhẹ (Qt) | **Nhẹ (Go + Wails)** |
+
+<sub>⭐ = chỉ DevClip có trong nhóm này.</sub>
+
+**Nên chọn cái nào?**
+
+- **Raycast** — launcher all‑in‑one kèm AI, tốt nhất trên macOS.
+- **CopyQ** — đa nền tảng, scripting sâu, lưu trữ lâu dài.
+- **DevClip** — clipboard **riêng tư, cho dev, trên Windows, zero‑setup**.
 
 ---
 
