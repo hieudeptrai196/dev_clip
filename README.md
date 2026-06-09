@@ -42,24 +42,38 @@ English · [Tiếng Việt](README.vi.md)
 
 ---
 
-## 🆚 DevClip vs. Windows + V
+## 🆚 How DevClip compares
 
-| | Windows + V | DevClip |
-|---|:---:|:---:|
-| Audience | General users | **Developers** |
-| History size | — | **10–500 (configurable)** |
-| Hotkey | Fixed `Win+V` | **Customizable** |
-| Search | ❌ | ✅ |
-| Code formatting (JSON/SQL) | ❌ | ✅ **(Pretty & Minify)** |
-| JWT Decoder | ❌ | ✅ **(Split‑view & expiry banner)** |
-| Timestamp Converter | ❌ | ✅ **(Epoch ⇄ Local Date)** |
-| Local Stats Dashboard | ❌ | ✅ **(Web UI with real-time charts)** |
-| String transforms | ❌ | ✅ (`UPPER`, `camel`, `snake`, etc.) |
-| Pin | ✅ | ✅ + **drag to reorder** |
-| Fullscreen preview | ❌ | ✅ |
-| Open source | ❌ | ✅ |
+DevClip stands on three pillars the alternatives don't combine:
 
-> DevClip isn’t meant to fully replace Win + V — it streamlines the **developer** workflow.
+- 🔒 **Private by design** — history lives only in RAM, evaporates when you quit, and sensitive apps (password managers) are auto‑ignored. Win + V, Raycast and CopyQ all persist history to disk.
+- 🧑‍💻 **Built for code** — auto‑detects and decodes JSON, SQL, JWT and timestamps, plus case transforms and minify. The others are general‑purpose.
+- 🆓 **Free, open & light** — no subscription, no account, a small Go + Wails footprint.
+
+| | Windows + V | Raycast | CopyQ | **DevClip** |
+|---|:---:|:---:|:---:|:---:|
+| Platform | Windows | macOS + Windows *(beta)* | Win / Mac / Linux | Windows |
+| Price / license | Built‑in | Freemium, Pro $8+/mo | Free, open‑source | **Free, open‑source** |
+| Focus | General users | General launcher | Power clipboard | **Developer clipboard** |
+| History storage | Disk | Encrypted disk | Disk | **RAM only** ⭐ |
+| Clears on exit | ❌ | ❌ | ❌ | **✅** ⭐ |
+| Auto‑ignore password managers | ❌ | ❌ | ❌ | **✅** ⭐ |
+| JSON / SQL format + minify | ❌ | ❌ | scripting | **✅** ⭐ |
+| JWT decoder | ❌ | ❌ | ❌ | **✅** ⭐ |
+| Epoch ⇄ date converter | ❌ | ❌ | ❌ | **✅** ⭐ |
+| String transforms | ❌ | via extensions | via scripting | **✅ built‑in** |
+| Search | ❌ | ✅ | ✅ | ✅ |
+| Pin / reorder | ✅ | ✅ | ✅ (tabs) | ✅ + **drag** |
+| Custom hotkey | ❌ | ✅ | ✅ | ✅ |
+| Footprint | OS built‑in | Heavier | Light (Qt) | **Light (Go + Wails)** |
+
+<sub>⭐ = unique to DevClip among these tools.</sub>
+
+**Which should you pick?**
+
+- **Raycast** — an all‑in‑one launcher with AI, best on macOS.
+- **CopyQ** — cross‑platform with deep scripting and a long‑term archive.
+- **DevClip** — a private, developer‑focused clipboard for Windows with zero setup.
 
 ---
 
