@@ -4,7 +4,7 @@
 
 # DevClip
 
-**Clipboard manager chạy ngầm dành cho lập trình viên — bản `Win + V` thông minh hơn.**
+**Clipboard manager chạy ngầm dành cho lập trình viên — đơn giản như `Win + V`, chỉ là thông minh hơn.**
 
 [English](README.md) · Tiếng Việt
 
@@ -14,7 +14,7 @@
 
 </div>
 
-> Copy bất cứ thứ gì, bấm **Alt + V** rồi dán lại — kèm các "siêu năng lực" cho dev như format JSON/SQL, biến đổi chuỗi, ghim và preview toàn màn hình.
+> Không cần cài đặt, không cần học gì: copy bất cứ thứ gì, bấm **Alt + V** rồi dán lại. Các "siêu năng lực" cho dev — format JSON/SQL, biến đổi chuỗi, giải mã JWT, ghim và preview toàn màn hình — luôn sẵn ngay khi bạn cần.
 
 ## 📸 Ảnh chụp màn hình
 
@@ -49,6 +49,7 @@ DevClip đứng trên 3 trụ cột mà các lựa chọn khác không gộp đ�
 - 🔒 **Riêng tư từ thiết kế** — lịch sử chỉ nằm trên RAM, bốc hơi khi thoát, và tự bỏ qua các app nhạy cảm (trình quản lý mật khẩu). Win + V, Raycast và CopyQ đều lưu lịch sử xuống ổ cứng.
 - 🧑‍💻 **Sinh ra cho code** — tự nhận diện và decode JSON, SQL, JWT, timestamp, kèm biến đổi chuỗi và nén. Các tool kia đều đa dụng chung chung.
 - 🆓 **Miễn phí, mã nguồn mở & nhẹ** — không subscription, không tài khoản, footprint Go + Wails nhỏ gọn.
+- ⚡ **Quen tay & zero‑setup** — dùng y như Win + V: bấm hotkey, chọn, dán. Không file config, không khái niệm phải học, không rườm rà như CopyQ. Công cụ cho dev có sẵn khi cần, và "ẩn đi" khi không cần.
 
 | | Windows + V | Raycast | CopyQ | **DevClip** |
 |---|:---:|:---:|:---:|:---:|
@@ -66,6 +67,7 @@ DevClip đứng trên 3 trụ cột mà các lựa chọn khác không gộp đ�
 | Ghim / sắp xếp | ✅ | ✅ | ✅ (tabs) | ✅ + **kéo‑thả** |
 | Hotkey tuỳ chỉnh | ❌ | ✅ | ✅ | ✅ |
 | Độ nặng | OS sẵn | Nặng hơn | Nhẹ (Qt) | **Nhẹ (Go + Wails)** |
+| Cài đặt / độ khó làm quen | Không | Thấp | **Khó** | **Không — dùng như Win + V** |
 
 <sub>⭐ = chỉ DevClip có trong nhóm này.</sub>
 

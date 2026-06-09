@@ -4,7 +4,7 @@
 
 # DevClip
 
-**A background clipboard manager built for developers — a smarter `Win + V`.**
+**A background clipboard manager built for developers — as simple as `Win + V`, just smarter.**
 
 English · [Tiếng Việt](README.vi.md)
 
@@ -14,7 +14,7 @@ English · [Tiếng Việt](README.vi.md)
 
 </div>
 
-> Copy anything, press **Alt + V**, and paste it back — with developer super‑powers like JSON/SQL formatting, case transforms, pinning and fullscreen preview.
+> Nothing to set up and nothing to learn: copy anything, press **Alt + V**, and paste it back. The developer super‑powers — JSON/SQL formatting, case transforms, JWT decoding, pinning and fullscreen preview — are there the moment you need them.
 
 ## 📸 Screenshots
 
@@ -49,6 +49,7 @@ DevClip stands on three pillars the alternatives don't combine:
 - 🔒 **Private by design** — history lives only in RAM, evaporates when you quit, and sensitive apps (password managers) are auto‑ignored. Win + V, Raycast and CopyQ all persist history to disk.
 - 🧑‍💻 **Built for code** — auto‑detects and decodes JSON, SQL, JWT and timestamps, plus case transforms and minify. The others are general‑purpose.
 - 🆓 **Free, open & light** — no subscription, no account, a small Go + Wails footprint.
+- ⚡ **Familiar & zero‑setup** — it works just like Win + V: press the hotkey, pick, paste. No config files, no concepts to learn, none of CopyQ's complexity. The dev tools are there when you need them and out of the way when you don't.
 
 | | Windows + V | Raycast | CopyQ | **DevClip** |
 |---|:---:|:---:|:---:|:---:|
@@ -66,6 +67,7 @@ DevClip stands on three pillars the alternatives don't combine:
 | Pin / reorder | ✅ | ✅ | ✅ (tabs) | ✅ + **drag** |
 | Custom hotkey | ❌ | ✅ | ✅ | ✅ |
 | Footprint | OS built‑in | Heavier | Light (Qt) | **Light (Go + Wails)** |
+| Setup / learning curve | None | Low | **Steep** | **None — works like Win + V** |
 
 <sub>⭐ = unique to DevClip among these tools.</sub>
 
