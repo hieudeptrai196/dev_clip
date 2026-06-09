@@ -87,12 +87,10 @@ DevClip đứng trên 3 trụ cột mà các lựa chọn khác không gộp đ�
 
 > Windows 10/11, 64‑bit.
 
-**Cách 1 — Installer (khuyên dùng)**
-1. Tải **`DevClip-amd64-installer.exe`** từ [Google Drive](https://drive.google.com/file/d/1sjutFfZesOxkNCqL9t3olw5J80enEV1h/view?usp=sharing).
-2. Chạy file và làm theo các bước. App được cài kèm shortcut ở Start Menu.
+**[⬇️ Tải từ Google Drive](https://drive.google.com/drive/folders/11JG4dXV7Vn4KnnRNvwhoQ0_kt8oleWjn?usp=sharing)** — thư mục chứa cả hai bản:
 
-**Cách 2 — Portable**
-- Tải **`DevClip.exe`** từ [Google Drive](https://drive.google.com/file/d/1-v_gISTK4fH9cEbBL1x_nczpcadOvSx8/view?usp=sharing) và chạy thẳng — không cần cài.
+- **`DevClip-amd64-installer.exe`** — bản cài đặt (khuyên dùng): chạy và làm theo các bước; tự tạo shortcut ở Start Menu.
+- **`DevClip.exe`** — bản portable: chạy thẳng, không cần cài.
 
 > ℹ️ App **chưa ký số** nên lần đầu chạy Windows SmartScreen có thể cảnh báo. Bấm **More info → Run anyway**.
 
