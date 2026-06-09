@@ -4,7 +4,7 @@
 
 # DevClip
 
-**A background clipboard manager built for developers — a smarter `Win + V`.**
+**A background clipboard manager built for developers — as simple as `Win + V`, just smarter.**
 
 English · [Tiếng Việt](README.vi.md)
 
@@ -14,7 +14,7 @@ English · [Tiếng Việt](README.vi.md)
 
 </div>
 
-> Copy anything, press **Alt + V**, and paste it back — with developer super‑powers like JSON/SQL formatting, case transforms, pinning and fullscreen preview.
+> Nothing to set up and nothing to learn: copy anything, press **Alt + V**, and paste it back. The developer super‑powers — JSON/SQL formatting, case transforms, JWT decoding, pinning and fullscreen preview — are there the moment you need them.
 
 ## 📸 Screenshots
 

@@ -4,7 +4,7 @@
 
 # DevClip
 
-**Clipboard manager chạy ngầm dành cho lập trình viên — bản `Win + V` thông minh hơn.**
+**Clipboard manager chạy ngầm dành cho lập trình viên — đơn giản như `Win + V`, chỉ là thông minh hơn.**
 
 [English](README.md) · Tiếng Việt
 
@@ -14,7 +14,7 @@
 
 </div>
 
-> Copy bất cứ thứ gì, bấm **Alt + V** rồi dán lại — kèm các "siêu năng lực" cho dev như format JSON/SQL, biến đổi chuỗi, ghim và preview toàn màn hình.
+> Không cần cài đặt, không cần học gì: copy bất cứ thứ gì, bấm **Alt + V** rồi dán lại. Các "siêu năng lực" cho dev — format JSON/SQL, biến đổi chuỗi, giải mã JWT, ghim và preview toàn màn hình — luôn sẵn ngay khi bạn cần.
 
 ## 📸 Ảnh chụp màn hình
 
